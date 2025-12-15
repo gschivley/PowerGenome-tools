@@ -345,12 +345,27 @@ async def load_data():
     update_loading_text("Loading hierarchy data...")
 
     response = await fetch("./data/hierarchy.csv")
+    if not response.ok:
+        raise Exception(
+            f"Failed to load hierarchy.csv: {response.status} {response.statusText}"
+        )
     hierarchy_text = await response.text()
+
+    # Debug: check what we got
+    if hierarchy_text.startswith("<!"):
+        raise Exception(
+            f"Got HTML instead of CSV. First 100 chars: {hierarchy_text[:100]}"
+        )
+
     state.hierarchy_df = pd.read_csv(StringIO(hierarchy_text))
 
     update_loading_text("Loading transmission data...")
 
     response = await fetch("./data/transmission_capacity_reeds.csv")
+    if not response.ok:
+        raise Exception(
+            f"Failed to load transmission CSV: {response.status} {response.statusText}"
+        )
     transmission_text = await response.text()
     state.transmission_df = pd.read_csv(StringIO(transmission_text))
 
