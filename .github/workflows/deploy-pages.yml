@@ -24,14 +24,6 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare web directory
-        run: |
-          # Copy data files into web folder for static serving
-          mkdir -p web/data
-          cp data/hierarchy.csv web/data/
-          cp data/transmission_capacity_reeds.csv web/data/
-          cp data/US_PCA.geojson web/data/
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
