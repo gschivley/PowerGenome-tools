@@ -1,0 +1,17 @@
+[project]
+name = "powergenome-tools"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "geopandas>=1.1.1",
+    "ipykernel>=7.1.0",
+    "matplotlib>=3.10.8",
+    "networkx>=3.6.1",
+    "pandas>=2.3.3",
+    "pyyaml>=6.0.3",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.16.3",
+    "typer>=0.20.0",
+]

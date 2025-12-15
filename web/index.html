@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PowerGenome Region Clustering</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet Draw for box selection -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+
+    <!-- PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.11.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.11.1/core.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+        }
+
+        /* Hide PyScript terminal/stderr output (deprecation warnings) */
+        script[type="py"]+* .py-terminal,
+        .py-terminal,
+        .py-error,
+        [id^="py-"] {
+            display: none !important;
+        }
+
+        #app {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            height: 100%;
+        }
+
+        #sidebar {
+            padding: 16px;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        #sidebar h2 {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+        }
+
+        .section {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0052a3;
+        }
+
+        .btn-primary:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .checkbox-group {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input {
+            margin-right: 8px;
+        }
+
+        .ba-list {
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 12px;
+            background: white;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .ba-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 3px;
+            margin: 2px;
+            font-size: 11px;
+        }
+
+        .ba-tag.unclustered {
+            background: #fff3e0;
+            border-color: #ffb74d;
+        }
+
+        #yamlOut {
+            width: 100%;
+            height: 180px;
+            font-family: monospace;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        #map {
+            height: 100%;
+        }
+
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        #loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #0066cc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .legend {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 14px;
+            margin-right: 8px;
+            border: 1px solid #999;
+        }
+
+        /* Box selection mode */
+        .selection-mode {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .mode-btn.active {
+            background: #0066cc;
+            color: white;
+            border-color: #0066cc;
+        }
+
+        #map.box-select-mode {
+            cursor: crosshair;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 2px dashed #0066cc;
+            background: rgba(0, 102, 204, 0.1);
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div id="loadingText">Loading PyScript and dependencies...</div>
+    </div>
+
+    <div id="app">
+        <div id="sidebar">
+            <h2>🗺️ Region Clustering</h2>
+
+            <div id="statusBox" class="status info">Click BAs on the map to select them for clustering.</div>
+
+            <div class="section">
+                <label>Grouping Column</label>
+                <select id="groupingColumn">
+                    <option value="nercr" selected>nercr (NERC Region)</option>
+                    <option value="transreg">transreg (Transmission Region)</option>
+                    <option value="transgrp">transgrp (Transmission Group)</option>
+                    <option value="st">st (State)</option>
+                    <option value="interconnect">interconnect</option>
+                    <option value="cendiv">cendiv (Census Division)</option>
+                </select>
+            </div>
+
+            <div class="section">
+                <label>Target Number of Regions</label>
+                <input id="targetRegions" type="number" value="10" min="1" max="134" />
+            </div>
+
+            <div class="section">
+                <label>Groups to Keep Unclustered</label>
+                <div id="noClusterContainer" class="checkbox-group">
+                    <em>Loading...</em>
+                </div>
+            </div>
+
+            <div class="section">
+                <label>Selection Mode</label>
+                <div class="selection-mode">
+                    <button class="mode-btn active" id="clickModeBtn" title="Click individual BAs">🖱️ Click</button>
+                    <button class="mode-btn" id="boxModeBtn" title="Drag to select multiple BAs">⬜ Box Select</button>
+                </div>
+                <div style="font-size: 11px; color: #666; margin-bottom: 8px;" id="selectionHint">
+                    Click on BAs to toggle selection
+                </div>
+            </div>
+
+            <div class="section">
+                <button class="btn btn-primary" id="runBtn" disabled>Run Clustering</button>
+                <button class="btn btn-secondary" id="selectAllBtn">Select All</button>
+                <button class="btn btn-secondary" id="clearSelectionBtn">Clear</button>
+            </div>
+
+            <div class="section">
+                <label>Selected BAs (<span id="selectedCount">0</span> of <span id="totalCount">134</span>)</label>
+                <div id="selectedList" class="ba-list">
+                    <em>None selected</em>
+                </div>
+            </div>
+
+            <div class="section">
+                <label>YAML Output</label>
+                <textarea id="yamlOut" readonly placeholder="Run clustering to generate YAML..."></textarea>
+                <button class="btn btn-secondary" id="copyYamlBtn">Copy</button>
+                <button class="btn btn-secondary" id="downloadYamlBtn">Download</button>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Box selection helper (pure JS for responsiveness) -->
+    <script>
+        // Box selection state
+        window.boxSelectState = {
+            enabled: false,
+            isDrawing: false,
+            startPoint: null,
+            boxElement: null
+        };
+
+        // Get selected BAs within bounds (called from Python)
+        window.getBAsInBounds = function (bounds) {
+            return [];
+        };
+    </script>
+
+    <!-- PyScript config and app -->
+    <script type="py" src="./cluster_app.py" config="./pyscript.toml"></script>
+</body>
+
+</html>

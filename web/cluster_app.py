@@ -1,0 +1,1024 @@
+"""
+PowerGenome Region Clustering - PyScript Web App
+
+This module runs in the browser via PyScript and handles:
+1. Loading and displaying the BA map
+2. Managing BA selection state
+3. Running spectral clustering
+4. Generating YAML output
+"""
+
+import asyncio
+import json
+import warnings
+from io import StringIO
+
+from js import L, document, fetch, window
+from pyodide.ffi import create_proxy, to_js
+
+# Suppress pandas pyarrow deprecation warning
+warnings.filterwarnings("ignore", message=".*pyarrow.*", category=DeprecationWarning)
+
+import networkx as nx
+import numpy as np
+
+# Will be imported after PyScript loads packages
+import pandas as pd
+import yaml
+from scipy.cluster.hierarchy import fcluster, linkage
+from scipy.spatial.distance import squareform
+from sklearn.cluster import SpectralClustering
+
+# ============================================================================
+# Global State
+# ============================================================================
+
+
+class AppState:
+    def __init__(self):
+        self.map = None
+        self.geojson_layer = None
+        self.geojson_data = None
+        self.hierarchy_df = None
+        self.transmission_df = None
+        self.selected_bas = set()
+        self.ba_layers = {}  # ba_id -> layer
+        self.all_bas = set()
+        self.ba_centroids = {}  # ba_id -> (lat, lng) for box selection
+        self.box_select_mode = False
+        self.box_start = None
+        self.group_colors = {}  # group_value -> color
+        self.ba_to_group = {}  # ba_id -> group_value
+        self.current_grouping = None  # current grouping column
+
+
+state = AppState()
+
+# ============================================================================
+# Styling
+# ============================================================================
+
+STYLE_UNSELECTED = {
+    "fillColor": "#cccccc",
+    "fillOpacity": 0.4,
+    "color": "#666666",
+    "weight": 1,
+}
+
+STYLE_SELECTED = {
+    "fillColor": "#2196F3",
+    "fillOpacity": 0.6,
+    "color": "#1565C0",
+    "weight": 2,
+}
+
+STYLE_HOVER = {
+    "fillOpacity": 0.8,
+    "weight": 3,
+}
+
+
+def get_outline_color(ba_id):
+    """Get the outline color for a BA based on its group."""
+    group = state.ba_to_group.get(ba_id)
+    if group and group in state.group_colors:
+        return state.group_colors[group]
+    return "#666666"  # default gray
+
+
+# Cluster colors for visualization (fill colors after clustering)
+CLUSTER_COLORS = [
+    "#e41a1c",
+    "#377eb8",
+    "#4daf4a",
+    "#984ea3",
+    "#ff7f00",
+    "#ffff33",
+    "#a65628",
+    "#f781bf",
+    "#999999",
+    "#66c2a5",
+    "#fc8d62",
+    "#8da0cb",
+    "#e78ac3",
+    "#a6d854",
+    "#ffd92f",
+    "#e5c494",
+    "#b3b3b3",
+    "#8dd3c7",
+    "#ffffb3",
+    "#bebada",
+]
+
+# Group outline colors (for showing regional groupings)
+GROUP_OUTLINE_COLORS = [
+    "#1b9e77",
+    "#d95f02",
+    "#7570b3",
+    "#e7298a",
+    "#66a61e",
+    "#e6ab02",
+    "#a6761d",
+    "#666666",
+    "#8dd3c7",
+    "#fb8072",
+    "#80b1d3",
+    "#fdb462",
+    "#b3de69",
+    "#fccde5",
+    "#bc80bd",
+    "#ccebc5",
+    "#ffed6f",
+    "#1f78b4",
+    "#33a02c",
+    "#fb9a99",
+]
+
+# ============================================================================
+# Map Functions
+# ============================================================================
+
+
+def update_loading_text(text):
+    """Update the loading indicator text."""
+    el = document.getElementById("loadingText")
+    if el:
+        el.textContent = text
+
+
+def hide_loading():
+    """Hide the loading overlay."""
+    el = document.getElementById("loading")
+    if el:
+        el.classList.add("hidden")
+
+
+def set_status(message, status_type="info"):
+    """Update the status box."""
+    el = document.getElementById("statusBox")
+    if el:
+        el.textContent = message
+        el.className = f"status {status_type}"
+
+
+def update_selected_display():
+    """Update the selected BAs display."""
+    count_el = document.getElementById("selectedCount")
+    list_el = document.getElementById("selectedList")
+
+    if count_el:
+        count_el.textContent = str(len(state.selected_bas))
+
+    if list_el:
+        if state.selected_bas:
+            sorted_bas = sorted(state.selected_bas)
+            html = "".join(f'<span class="ba-tag">{ba}</span>' for ba in sorted_bas)
+            list_el.innerHTML = html
+        else:
+            list_el.innerHTML = "<em>None selected</em>"
+
+    # Enable/disable run button
+    run_btn = document.getElementById("runBtn")
+    if run_btn:
+        run_btn.disabled = len(state.selected_bas) < 2
+
+
+def toggle_ba_selection(ba_id, layer):
+    """Toggle selection state of a BA."""
+    outline_color = get_outline_color(ba_id)
+
+    if ba_id in state.selected_bas:
+        state.selected_bas.remove(ba_id)
+        layer.setStyle(
+            to_js(
+                {
+                    "fillColor": "#cccccc",
+                    "fillOpacity": 0.4,
+                    "color": outline_color,
+                    "weight": 2,
+                }
+            )
+        )
+    else:
+        state.selected_bas.add(ba_id)
+        layer.setStyle(
+            to_js(
+                {
+                    "fillColor": "#2196F3",
+                    "fillOpacity": 0.6,
+                    "color": outline_color,
+                    "weight": 3,
+                }
+            )
+        )
+
+    update_selected_display()
+
+
+def on_feature_click(e):
+    """Handle click on a BA feature."""
+    layer = e.target
+    props = layer.feature.properties
+    ba_id = props.rb
+    toggle_ba_selection(ba_id, layer)
+
+
+def on_feature_mouseover(e):
+    """Handle mouseover on a BA feature."""
+    layer = e.target
+    layer.setStyle(to_js(STYLE_HOVER))
+    layer.bringToFront()
+
+
+def on_feature_mouseout(e):
+    """Handle mouseout on a BA feature."""
+    layer = e.target
+    props = layer.feature.properties
+    ba_id = props.rb
+
+    outline_color = get_outline_color(ba_id)
+
+    if ba_id in state.selected_bas:
+        layer.setStyle(
+            to_js(
+                {
+                    "fillColor": "#2196F3",
+                    "fillOpacity": 0.6,
+                    "color": outline_color,
+                    "weight": 3,
+                }
+            )
+        )
+    else:
+        layer.setStyle(
+            to_js(
+                {
+                    "fillColor": "#cccccc",
+                    "fillOpacity": 0.4,
+                    "color": outline_color,
+                    "weight": 2,
+                }
+            )
+        )
+
+
+def on_each_feature(feature, layer):
+    """Attach event handlers to each feature."""
+    props = feature.properties
+    ba_id = props.rb
+
+    state.ba_layers[ba_id] = layer
+    state.all_bas.add(ba_id)
+
+    # Calculate centroid for box selection
+    bounds = layer.getBounds()
+    center = bounds.getCenter()
+    state.ba_centroids[ba_id] = (center.lat, center.lng)
+
+    # Tooltip
+    tooltip = f"<b>{ba_id}</b><br>State: {props.st}<br>RTO: {props.rto}"
+    layer.bindTooltip(tooltip)
+
+    # Events
+    layer.on("click", create_proxy(on_feature_click))
+    layer.on("mouseover", create_proxy(on_feature_mouseover))
+    layer.on("mouseout", create_proxy(on_feature_mouseout))
+
+
+def style_feature(feature):
+    """Return initial style for a feature."""
+    return to_js(STYLE_UNSELECTED)
+
+
+async def init_map():
+    """Initialize the Leaflet map."""
+    update_loading_text("Initializing map...")
+
+    # Create map centered on US
+    state.map = L.map("map").setView(to_js([39.8, -98.5]), 4)
+
+    # Add tile layer
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        to_js(
+            {
+                "attribution": '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
+                "maxZoom": 18,
+            }
+        ),
+    ).addTo(state.map)
+
+    # Load GeoJSON
+    update_loading_text("Loading BA boundaries...")
+
+    response = await fetch("./data/US_PCA.geojson")
+    geojson_text = await response.text()
+    state.geojson_data = json.loads(geojson_text)
+
+    # Add GeoJSON layer
+    state.geojson_layer = L.geoJSON(
+        to_js(state.geojson_data),
+        to_js(
+            {
+                "style": create_proxy(style_feature),
+                "onEachFeature": create_proxy(on_each_feature),
+            }
+        ),
+    ).addTo(state.map)
+
+    # Fit bounds
+    state.map.fitBounds(state.geojson_layer.getBounds())
+
+    # Update total count
+    total_el = document.getElementById("totalCount")
+    if total_el:
+        total_el.textContent = str(len(state.all_bas))
+
+
+# ============================================================================
+# Data Loading
+# ============================================================================
+
+
+async def load_data():
+    """Load hierarchy and transmission CSVs."""
+    update_loading_text("Loading hierarchy data...")
+
+    response = await fetch("./data/hierarchy.csv")
+    hierarchy_text = await response.text()
+    state.hierarchy_df = pd.read_csv(StringIO(hierarchy_text))
+
+    update_loading_text("Loading transmission data...")
+
+    response = await fetch("./data/transmission_capacity_reeds.csv")
+    transmission_text = await response.text()
+    state.transmission_df = pd.read_csv(StringIO(transmission_text))
+
+
+def update_group_colors():
+    """Update group colors based on current grouping column and apply to map."""
+    grouping_col = document.getElementById("groupingColumn").value
+
+    if state.hierarchy_df is None:
+        return
+
+    # Skip if same grouping column (unless first time)
+    if state.current_grouping == grouping_col and state.group_colors:
+        return
+
+    state.current_grouping = grouping_col
+
+    # Get unique groups and assign colors
+    unique_groups = sorted(state.hierarchy_df[grouping_col].unique())
+    state.group_colors = {}
+    for i, group in enumerate(unique_groups):
+        state.group_colors[group] = GROUP_OUTLINE_COLORS[i % len(GROUP_OUTLINE_COLORS)]
+
+    # Build BA to group mapping
+    state.ba_to_group = {}
+    for _, row in state.hierarchy_df.iterrows():
+        ba = row["ba"]
+        state.ba_to_group[ba] = row[grouping_col]
+
+    # Apply colors to all BA layers
+    apply_group_colors_to_map()
+
+
+def apply_group_colors_to_map():
+    """Apply group outline colors to all BA layers on the map."""
+    for ba_id, layer in state.ba_layers.items():
+        outline_color = get_outline_color(ba_id)
+
+        if ba_id in state.selected_bas:
+            layer.setStyle(
+                to_js(
+                    {
+                        "fillColor": "#2196F3",
+                        "fillOpacity": 0.6,
+                        "color": outline_color,
+                        "weight": 3,
+                    }
+                )
+            )
+        else:
+            layer.setStyle(
+                to_js(
+                    {
+                        "fillColor": "#cccccc",
+                        "fillOpacity": 0.4,
+                        "color": outline_color,
+                        "weight": 2,
+                    }
+                )
+            )
+
+
+def update_no_cluster_options():
+    """Update the no-cluster checkbox options based on grouping column."""
+    grouping_col = document.getElementById("groupingColumn").value
+    container = document.getElementById("noClusterContainer")
+
+    if state.hierarchy_df is None or container is None:
+        return
+
+    # Update group colors when grouping changes
+    update_group_colors()
+
+    # Get unique values for this column
+    unique_values = sorted(state.hierarchy_df[grouping_col].unique())
+
+    # Build checkboxes with color indicators
+    html = ""
+    for val in unique_values:
+        color = state.group_colors.get(val, "#666666")
+        html += f"""
+            <label>
+                <input type="checkbox" name="noCluster" value="{val}">
+                <span style="display:inline-block;width:12px;height:12px;background:{color};border-radius:2px;margin-right:4px;vertical-align:middle;"></span>
+                {val}
+            </label>
+        """
+
+    container.innerHTML = html
+
+
+# ============================================================================
+# Clustering Logic (adapted from cluster_regions.py)
+# ============================================================================
+
+
+def build_transmission_graph(transmission_df, valid_bas):
+    """Build undirected weighted graph from transmission data."""
+    G = nx.Graph()
+
+    for _, row in transmission_df.iterrows():
+        region_from = row["region_from"]
+        region_to = row["region_to"]
+        capacity = row["firm_ttc_mw"]
+
+        # Only include edges between valid BAs
+        if region_from not in valid_bas or region_to not in valid_bas:
+            continue
+
+        if G.has_edge(region_from, region_to):
+            G[region_from][region_to]["weight"] += capacity
+        else:
+            G.add_edge(region_from, region_to, weight=capacity)
+
+    # Add isolated nodes for BAs with no connections
+    for ba in valid_bas:
+        if ba not in G:
+            G.add_node(ba)
+
+    return G
+
+
+def get_regional_groups(hierarchy_df, grouping_column, valid_bas):
+    """Map regional groups to their BAs."""
+    groups = {}
+
+    for _, row in hierarchy_df.iterrows():
+        ba = row["ba"]
+        if ba not in valid_bas:
+            continue
+
+        group = row[grouping_column]
+        if group not in groups:
+            groups[group] = set()
+        groups[group].add(ba)
+
+    return groups
+
+
+def spectral_cluster(graph, n_clusters):
+    """Perform spectral clustering."""
+    nodes = sorted(graph.nodes())
+    n = len(nodes)
+
+    if n <= n_clusters:
+        # Each node is its own cluster
+        return {i: {node} for i, node in enumerate(nodes)}
+
+    # Build adjacency matrix
+    A = nx.to_numpy_array(graph, nodelist=nodes, weight="weight")
+
+    # Check for isolated nodes
+    degrees = A.sum(axis=1)
+    isolated_mask = degrees == 0
+
+    if np.all(isolated_mask):
+        # All nodes isolated - assign to individual clusters
+        return {i: {node} for i, node in enumerate(nodes)}
+
+    if np.any(isolated_mask):
+        # Handle isolated nodes separately
+        connected_indices = np.where(~isolated_mask)[0]
+        isolated_indices = np.where(isolated_mask)[0]
+
+        connected_nodes = [nodes[i] for i in connected_indices]
+        isolated_nodes = [nodes[i] for i in isolated_indices]
+
+        if len(connected_nodes) <= n_clusters - len(isolated_nodes):
+            # Give each connected node its own cluster plus isolated
+            clusters = {i: {node} for i, node in enumerate(connected_nodes)}
+            for i, node in enumerate(isolated_nodes):
+                clusters[len(connected_nodes) + i] = {node}
+            return clusters
+
+        # Cluster connected nodes
+        A_connected = A[np.ix_(connected_indices, connected_indices)]
+        n_clusters_connected = max(1, n_clusters - len(isolated_nodes))
+
+        sc = SpectralClustering(
+            n_clusters=n_clusters_connected,
+            affinity="precomputed",
+            assign_labels="kmeans",
+            random_state=42,
+        )
+        labels = sc.fit_predict(A_connected)
+
+        clusters = {}
+        for idx, label in enumerate(labels):
+            if label not in clusters:
+                clusters[label] = set()
+            clusters[label].add(connected_nodes[idx])
+
+        # Add isolated nodes as individual clusters
+        next_label = max(clusters.keys()) + 1 if clusters else 0
+        for node in isolated_nodes:
+            clusters[next_label] = {node}
+            next_label += 1
+
+        return clusters
+
+    # All nodes connected
+    sc = SpectralClustering(
+        n_clusters=n_clusters,
+        affinity="precomputed",
+        assign_labels="kmeans",
+        random_state=42,
+    )
+    labels = sc.fit_predict(A)
+
+    clusters = {}
+    for idx, label in enumerate(labels):
+        if label not in clusters:
+            clusters[label] = set()
+        clusters[label].add(nodes[idx])
+
+    return clusters
+
+
+def generate_cluster_names(clusters, groups):
+    """Generate meaningful cluster names based on regional groups."""
+    cluster_names = {}
+    name_counts = {}
+
+    for label, nodes in clusters.items():
+        # Find which groups these nodes belong to
+        group_names = set()
+        for group_name, group_bas in groups.items():
+            if nodes & group_bas:
+                group_names.add(group_name)
+
+        if group_names:
+            name = "+".join(sorted(group_names))
+        else:
+            name = f"Cluster_{label}"
+
+        # Handle duplicates
+        if name in name_counts:
+            name_counts[name] += 1
+            name = f"{name}_{name_counts[name]}"
+        else:
+            name_counts[name] = 1
+
+        cluster_names[label] = name
+
+    return cluster_names
+
+
+def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_groups):
+    """
+    Run the clustering algorithm.
+
+    Returns a tuple of (model_regions, region_aggregations, error_message)
+    """
+    try:
+        # Filter hierarchy to selected BAs
+        hierarchy = state.hierarchy_df[
+            state.hierarchy_df["ba"].isin(selected_bas)
+        ].copy()
+
+        if len(hierarchy) == 0:
+            return None, None, "No valid BAs selected"
+
+        # Identify BAs to keep unclustered
+        unclustered_bas = set()
+        if no_cluster_groups:
+            for group in no_cluster_groups:
+                group_bas = set(hierarchy[hierarchy[grouping_column] == group]["ba"])
+                unclustered_bas.update(group_bas)
+
+        # BAs to cluster
+        cluster_bas = selected_bas - unclustered_bas
+
+        if len(cluster_bas) < 2:
+            # Only unclustered BAs
+            model_regions = sorted(selected_bas)
+            region_aggregations = {ba: [ba] for ba in selected_bas}
+            return model_regions, region_aggregations, None
+
+        # Build graph for clustering
+        graph = build_transmission_graph(state.transmission_df, cluster_bas)
+
+        # Get regional groups
+        groups = get_regional_groups(hierarchy, grouping_column, cluster_bas)
+
+        # Determine actual target (accounting for unclustered)
+        actual_target = max(1, target_regions - len(unclustered_bas))
+        actual_target = min(actual_target, len(cluster_bas))
+
+        # Run spectral clustering
+        clusters = spectral_cluster(graph, actual_target)
+
+        # Generate names
+        cluster_names = generate_cluster_names(clusters, groups)
+
+        # Build output
+        region_aggregations = {}
+        for label, nodes in clusters.items():
+            name = cluster_names[label]
+            region_aggregations[name] = sorted(nodes)
+
+        # Add unclustered BAs
+        for ba in sorted(unclustered_bas):
+            region_aggregations[ba] = [ba]
+
+        model_regions = sorted(region_aggregations.keys())
+
+        return model_regions, region_aggregations, None
+
+    except Exception as e:
+        return None, None, str(e)
+
+
+def generate_yaml(model_regions, region_aggregations):
+    """Generate YAML output."""
+    output = {
+        "model_regions": model_regions,
+        "region_aggregations": region_aggregations,
+    }
+    return yaml.dump(output, default_flow_style=False, sort_keys=False)
+
+
+# ============================================================================
+# Event Handlers
+# ============================================================================
+
+
+def on_run_clustering(event):
+    """Handle Run Clustering button click."""
+    set_status("Running clustering...", "info")
+
+    grouping_col = document.getElementById("groupingColumn").value
+    target_regions = int(document.getElementById("targetRegions").value)
+
+    # Get no-cluster selections
+    no_cluster_groups = []
+    checkboxes = document.querySelectorAll('input[name="noCluster"]:checked')
+    for cb in checkboxes:
+        no_cluster_groups.append(cb.value)
+
+    # Run clustering
+    model_regions, region_aggregations, error = run_clustering(
+        state.selected_bas,
+        grouping_col,
+        target_regions,
+        no_cluster_groups,
+    )
+
+    if error:
+        set_status(f"Error: {error}", "error")
+        return
+
+    # Generate YAML
+    yaml_output = generate_yaml(model_regions, region_aggregations)
+
+    # Display
+    yaml_el = document.getElementById("yamlOut")
+    if yaml_el:
+        yaml_el.value = yaml_output
+
+    set_status(f"Clustering complete! {len(model_regions)} regions created.", "success")
+
+    # Update map colors to show clusters
+    update_map_cluster_colors(region_aggregations)
+
+
+def update_map_cluster_colors(region_aggregations):
+    """Update map to show cluster assignments with group outline colors preserved."""
+    # Build BA -> cluster mapping
+    ba_to_cluster = {}
+    cluster_names = list(region_aggregations.keys())
+
+    for i, (cluster_name, bas) in enumerate(region_aggregations.items()):
+        color = CLUSTER_COLORS[i % len(CLUSTER_COLORS)]
+        for ba in bas:
+            ba_to_cluster[ba] = color
+
+    # Update layer styles - keep group outline color
+    for ba_id, layer in state.ba_layers.items():
+        if ba_id in state.selected_bas:
+            fill_color = ba_to_cluster.get(ba_id, "#999999")
+            outline_color = get_outline_color(ba_id)
+            layer.setStyle(
+                to_js(
+                    {
+                        "fillColor": fill_color,
+                        "fillOpacity": 0.7,
+                        "color": outline_color,
+                        "weight": 3,
+                    }
+                )
+            )
+
+
+def on_select_all(event):
+    """Select all BAs."""
+    for ba_id, layer in state.ba_layers.items():
+        if ba_id not in state.selected_bas:
+            state.selected_bas.add(ba_id)
+            outline_color = get_outline_color(ba_id)
+            layer.setStyle(
+                to_js(
+                    {
+                        "fillColor": "#2196F3",
+                        "fillOpacity": 0.6,
+                        "color": outline_color,
+                        "weight": 3,
+                    }
+                )
+            )
+    update_selected_display()
+
+
+def on_clear_selection(event):
+    """Clear all selections."""
+    for ba_id, layer in state.ba_layers.items():
+        if ba_id in state.selected_bas:
+            outline_color = get_outline_color(ba_id)
+            layer.setStyle(
+                to_js(
+                    {
+                        "fillColor": "#cccccc",
+                        "fillOpacity": 0.4,
+                        "color": outline_color,
+                        "weight": 2,
+                    }
+                )
+            )
+    state.selected_bas.clear()
+    update_selected_display()
+
+
+# ============================================================================
+# Box Selection Mode
+# ============================================================================
+
+
+def set_selection_mode(mode):
+    """Set selection mode: 'click' or 'box'."""
+    state.box_select_mode = mode == "box"
+
+    # Update button styles
+    click_btn = document.getElementById("clickModeBtn")
+    box_btn = document.getElementById("boxModeBtn")
+    hint = document.getElementById("selectionHint")
+    map_el = document.getElementById("map")
+
+    if click_btn and box_btn:
+        if state.box_select_mode:
+            click_btn.classList.remove("active")
+            box_btn.classList.add("active")
+            if hint:
+                hint.textContent = "Drag on the map to select multiple BAs"
+            if map_el:
+                map_el.classList.add("box-select-mode")
+            # Disable map dragging
+            state.map.dragging.disable()
+        else:
+            click_btn.classList.add("active")
+            box_btn.classList.remove("active")
+            if hint:
+                hint.textContent = "Click on BAs to toggle selection"
+            if map_el:
+                map_el.classList.remove("box-select-mode")
+            # Enable map dragging
+            state.map.dragging.enable()
+
+
+def on_click_mode(event):
+    """Switch to click selection mode."""
+    set_selection_mode("click")
+
+
+def on_box_mode(event):
+    """Switch to box selection mode."""
+    set_selection_mode("box")
+
+
+def on_map_mousedown(e):
+    """Handle mousedown for box selection."""
+    if not state.box_select_mode:
+        return
+
+    state.box_start = e.latlng
+
+    # Create visual selection box
+    box = document.createElement("div")
+    box.id = "selectionBox"
+    box.className = "selection-box"
+
+    # Position at mouse
+    container_point = state.map.latLngToContainerPoint(e.latlng)
+    box.style.left = f"{container_point.x}px"
+    box.style.top = f"{container_point.y}px"
+    box.style.width = "0px"
+    box.style.height = "0px"
+
+    map_container = document.getElementById("map")
+    map_container.appendChild(box)
+
+
+def on_map_mousemove(e):
+    """Handle mousemove for box selection."""
+    if not state.box_select_mode or not state.box_start:
+        return
+
+    box = document.getElementById("selectionBox")
+    if not box:
+        return
+
+    # Get start and current container points
+    start_point = state.map.latLngToContainerPoint(state.box_start)
+    current_point = state.map.latLngToContainerPoint(e.latlng)
+
+    # Calculate box dimensions
+    min_x = min(start_point.x, current_point.x)
+    min_y = min(start_point.y, current_point.y)
+    width = abs(current_point.x - start_point.x)
+    height = abs(current_point.y - start_point.y)
+
+    # Update box position and size
+    box.style.left = f"{min_x}px"
+    box.style.top = f"{min_y}px"
+    box.style.width = f"{width}px"
+    box.style.height = f"{height}px"
+
+
+def on_map_mouseup(e):
+    """Handle mouseup for box selection - select BAs in box."""
+    if not state.box_select_mode or not state.box_start:
+        return
+
+    # Remove visual box
+    box = document.getElementById("selectionBox")
+    if box:
+        box.remove()
+
+    # Create bounds from start and end points
+    end_latlng = e.latlng
+    bounds = L.latLngBounds(state.box_start, end_latlng)
+
+    # Find all BAs whose centroid is within bounds
+    selected_count = 0
+    for ba_id, (lat, lng) in state.ba_centroids.items():
+        point = L.latLng(lat, lng)
+        if bounds.contains(point):
+            # Add to selection if not already selected
+            if ba_id not in state.selected_bas:
+                state.selected_bas.add(ba_id)
+                layer = state.ba_layers.get(ba_id)
+                if layer:
+                    outline_color = get_outline_color(ba_id)
+                    layer.setStyle(
+                        to_js(
+                            {
+                                "fillColor": "#2196F3",
+                                "fillOpacity": 0.6,
+                                "color": outline_color,
+                                "weight": 3,
+                            }
+                        )
+                    )
+                selected_count += 1
+
+    state.box_start = None
+    update_selected_display()
+
+    if selected_count > 0:
+        set_status(f"Added {selected_count} BAs to selection.", "info")
+
+
+def on_copy_yaml(event):
+    """Copy YAML to clipboard."""
+    yaml_el = document.getElementById("yamlOut")
+    if yaml_el and yaml_el.value:
+        window.navigator.clipboard.writeText(yaml_el.value)
+        set_status("YAML copied to clipboard!", "success")
+
+
+def on_download_yaml(event):
+    """Download YAML file."""
+    yaml_el = document.getElementById("yamlOut")
+    if not yaml_el or not yaml_el.value:
+        set_status("No YAML to download. Run clustering first.", "error")
+        return
+
+    # Create blob and download
+    blob = window.Blob.new([yaml_el.value], to_js({"type": "text/yaml"}))
+    url = window.URL.createObjectURL(blob)
+
+    a = document.createElement("a")
+    a.href = url
+    a.download = "region_aggregations.yml"
+    a.click()
+
+    window.URL.revokeObjectURL(url)
+    set_status("YAML downloaded!", "success")
+
+
+def on_grouping_change(event):
+    """Handle grouping column change."""
+    update_no_cluster_options()
+
+
+# ============================================================================
+# Initialization
+# ============================================================================
+
+
+async def main():
+    """Main initialization function."""
+    try:
+        # Load data
+        await load_data()
+
+        # Initialize map
+        await init_map()
+
+        # Set up UI - this also sets up group colors after map is ready
+        update_no_cluster_options()
+
+        # Force initial group colors (in case update_no_cluster_options skipped it)
+        state.current_grouping = None  # Force re-calculation
+        update_group_colors()
+
+        # Attach event handlers
+        document.getElementById("runBtn").addEventListener(
+            "click", create_proxy(on_run_clustering)
+        )
+        document.getElementById("selectAllBtn").addEventListener(
+            "click", create_proxy(on_select_all)
+        )
+        document.getElementById("clearSelectionBtn").addEventListener(
+            "click", create_proxy(on_clear_selection)
+        )
+        document.getElementById("copyYamlBtn").addEventListener(
+            "click", create_proxy(on_copy_yaml)
+        )
+        document.getElementById("downloadYamlBtn").addEventListener(
+            "click", create_proxy(on_download_yaml)
+        )
+        document.getElementById("groupingColumn").addEventListener(
+            "change", create_proxy(on_grouping_change)
+        )
+
+        # Box selection mode buttons
+        document.getElementById("clickModeBtn").addEventListener(
+            "click", create_proxy(on_click_mode)
+        )
+        document.getElementById("boxModeBtn").addEventListener(
+            "click", create_proxy(on_box_mode)
+        )
+
+        # Map events for box selection
+        state.map.on("mousedown", create_proxy(on_map_mousedown))
+        state.map.on("mousemove", create_proxy(on_map_mousemove))
+        state.map.on("mouseup", create_proxy(on_map_mouseup))
+
+        # Done loading
+        hide_loading()
+        set_status(
+            "Ready! Click BAs on the map to select them, or use Box Select mode to drag-select multiple.",
+            "info",
+        )
+
+    except Exception as e:
+        set_status(f"Initialization error: {e}", "error")
+        hide_loading()
+
+
+# Run main
+asyncio.ensure_future(main())
