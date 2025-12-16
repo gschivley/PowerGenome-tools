@@ -377,6 +377,7 @@
                         <li><strong>Choose grouping:</strong> The <em>Grouping Column</em> determines how BAs are
                             grouped for clustering (colored outlines show groups).</li>
                         <li><strong>Set target regions:</strong> Enter how many final regions you want after clustering.
+                            Optionally enable <em>Auto-optimize</em> to find the best number of regions within a range.
                         </li>
                         <li><strong>Exclude groups:</strong> Check any groups in <em>Groups to Keep Unclustered</em> to
                             keep them as individual BAs.</li>
@@ -387,7 +388,8 @@
                     <div class="tip">
                         💡 <strong>Tip:</strong> The clustering uses transmission capacity between BAs to create
                         aggregated regions. BAs are first clustered within their selected grouping (e.g., NERC region),
-                        then groups are merged to reach the target number of regions.
+                        then groups are merged to reach the target number of regions. The selected grouping affects the
+                        clustering results, so experiment with different options to see what works best for your case!
                     </div>
                 </div>
             </div>
