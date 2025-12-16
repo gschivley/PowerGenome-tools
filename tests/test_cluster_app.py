@@ -7,10 +7,11 @@ clustering, and YAML generation.
 """
 
 import json
+
+import networkx as nx
 import numpy as np
 import pandas as pd
 import pytest
-import networkx as nx
 import yaml
 
 # Since we can't import cluster_app.py directly (it has PyScript dependencies),
@@ -506,7 +507,9 @@ def normalize_technology(tech_name, omit_tokens=None):
     name = tech_name.lower()
 
     default_omit = ["solar thermal", "all other", "flywheel"]
-    tokens = [t.lower() for t in (omit_tokens if omit_tokens is not None else default_omit)]
+    tokens = [
+        t.lower() for t in (omit_tokens if omit_tokens is not None else default_omit)
+    ]
 
     if any(token in name for token in tokens):
         return None
@@ -567,15 +570,9 @@ class TestTechnologyNormalization:
 
     def test_normalize_solar_technologies(self):
         """Test normalization of solar technologies."""
-        assert (
-            normalize_technology("Photovoltaic")
-            == "Solar Photovoltaic"
-        )
+        assert normalize_technology("Photovoltaic") == "Solar Photovoltaic"
         assert normalize_technology("Solar Photovoltaic") == "Solar Photovoltaic"
-        assert (
-            normalize_technology("Solar Thermal")
-            is None
-        )  # Omitted by default
+        assert normalize_technology("Solar Thermal") is None  # Omitted by default
 
     def test_normalize_hydro_technologies(self):
         """Test normalization of hydroelectric technologies."""
@@ -583,10 +580,7 @@ class TestTechnologyNormalization:
             normalize_technology("Conventional Hydroelectric")
             == "Conventional Hydroelectric"
         )
-        assert (
-            normalize_technology("Run of River")
-            == "Run of River Hydroelectric"
-        )
+        assert normalize_technology("Run of River") == "Run of River Hydroelectric"
         assert (
             normalize_technology("Pumped Storage Hydro")
             == "Hydroelectric Pumped Storage"
@@ -594,29 +588,19 @@ class TestTechnologyNormalization:
 
     def test_normalize_coal_technologies(self):
         """Test normalization of coal technologies."""
-        assert (
-            normalize_technology("Steam Coal")
-            == "Conventional Steam Coal"
-        )
-        assert (
-            normalize_technology("Coal")
-            == "Conventional Steam Coal"
-        )
+        assert normalize_technology("Steam Coal") == "Conventional Steam Coal"
+        assert normalize_technology("Coal") == "Conventional Steam Coal"
 
     def test_normalize_gas_technologies(self):
         """Test normalization of natural gas technologies."""
         assert (
-            normalize_technology("Combined Cycle")
-            == "Natural Gas Fired Combined Cycle"
+            normalize_technology("Combined Cycle") == "Natural Gas Fired Combined Cycle"
         )
         assert (
             normalize_technology("Combustion Turbine")
             == "Natural Gas Fired Combustion Turbine"
         )
-        assert (
-            normalize_technology("Steam Turbine")
-            == "Natural Gas Steam Turbine"
-        )
+        assert normalize_technology("Steam Turbine") == "Natural Gas Steam Turbine"
         assert (
             normalize_technology("Internal Combustion Engine")
             == "Natural Gas Internal Combustion Engine"
@@ -626,14 +610,8 @@ class TestTechnologyNormalization:
         """Test normalization of biomass technologies."""
         assert normalize_technology("Biomass") == "Biomass"
         assert normalize_technology("Landfill Gas") == "Landfill Gas"
-        assert (
-            normalize_technology("Municipal Solid Waste")
-            == "Municipal Solid Waste"
-        )
-        assert (
-            normalize_technology("Wood/Wood Waste")
-            == "Wood/Wood Waste Biomass"
-        )
+        assert normalize_technology("Municipal Solid Waste") == "Municipal Solid Waste"
+        assert normalize_technology("Wood/Wood Waste") == "Wood/Wood Waste Biomass"
 
     def test_normalize_battery_storage(self):
         """Test normalization of battery and storage technologies."""
@@ -666,25 +644,13 @@ class TestTechnologyNormalization:
 
     def test_normalize_omit_custom_tokens(self):
         """Test omitting custom tokens."""
-        assert (
-            normalize_technology("Wind", omit_tokens=["wind"])
-            is None
-        )
-        assert (
-            normalize_technology("Solar PV", omit_tokens=["solar"])
-            is None
-        )
+        assert normalize_technology("Wind", omit_tokens=["wind"]) is None
+        assert normalize_technology("Solar PV", omit_tokens=["solar"]) is None
 
     def test_normalize_case_insensitive(self):
         """Test that normalization is case-insensitive."""
-        assert (
-            normalize_technology("WIND TURBINE")
-            == "Onshore Wind Turbine"
-        )
-        assert (
-            normalize_technology("SOLAR PHOTOVOLTAIC")
-            == "Solar Photovoltaic"
-        )
+        assert normalize_technology("WIND TURBINE") == "Onshore Wind Turbine"
+        assert normalize_technology("SOLAR PHOTOVOLTAIC") == "Solar Photovoltaic"
 
     def test_normalize_non_string_input(self):
         """Test handling of non-string input."""
@@ -881,10 +847,14 @@ class TestKMeansSimple:
 
     def test_kmeans_two_clusters(self):
         """Test k-means with k=2 on well-separated data."""
-        features = np.array([
-            [0, 0], [1, 1],  # Cluster 1
-            [10, 10], [11, 11],  # Cluster 2
-        ])
+        features = np.array(
+            [
+                [0, 0],
+                [1, 1],  # Cluster 1
+                [10, 10],
+                [11, 11],  # Cluster 2
+            ]
+        )
         inertia, centers, labels = run_kmeans_simple(features, 2, seed=42)
 
         assert inertia >= 0
