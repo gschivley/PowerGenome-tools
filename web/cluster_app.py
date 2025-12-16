@@ -9,6 +9,7 @@ This module runs in the browser via PyScript and handles:
 """
 
 import asyncio
+import html
 import json
 import math
 import warnings
@@ -39,6 +40,9 @@ class AppState:
         self.geojson_data = None
         self.hierarchy_df = None
         self.transmission_df = None
+        self.plants_df = None  # generator-level data
+        self.plant_region_map = None  # plant_id -> BA mapping
+        self.plant_candidates = []  # cache of last candidate list
         self.selected_bas = set()
         self.ba_layers = {}  # ba_id -> layer
         self.all_bas = set()
@@ -59,14 +63,36 @@ class AppState:
         self.region_aggregations = (
             None  # Store last clustering result for redrawing lines
         )
+        self.custom_tech_groups = {}  # user-editable tech grouping map
+        self.available_techs = set()  # techs not currently assigned to a group
+        self.current_group = None  # currently selected group in UI
 
 
 state = AppState()
+GROUP_OUTLINE_COLORS = [
+    "#1b9e77",
+    "#d95f02",
+    "#7570b3",
+    "#e7298a",
+    "#66a61e",
+    "#e6ab02",
+    "#a6761d",
+    "#666666",
+    "#8dd3c7",
+    "#fb8072",
+    "#80b1d3",
+    "#fdb462",
+    "#b3de69",
+    "#fccde5",
+    "#bc80bd",
+    "#ccebc5",
+    "#ffed6f",
+    "#1f78b4",
+    "#33a02c",
+    "#fb9a99",
+]
 
-# ============================================================================
-# Styling
-# ============================================================================
-
+# Styling defaults
 STYLE_UNSELECTED = {
     "fillColor": "#cccccc",
     "fillOpacity": 0.4,
@@ -85,23 +111,6 @@ STYLE_HOVER = {
     "fillOpacity": 0.8,
     "weight": 3,
 }
-
-
-def get_outline_color(ba_id):
-    """Get the outline color for a BA based on its group."""
-    group = state.ba_to_group.get(ba_id)
-    if group and group in state.group_colors:
-        return state.group_colors[group]
-    return "#666666"  # default gray
-
-
-def get_fill_color(ba_id):
-    """Get the fill color for an unselected BA based on its group (lighter version)."""
-    group = state.ba_to_group.get(ba_id)
-    if group and group in state.group_fill_colors:
-        return state.group_fill_colors[group]
-    return "#cccccc"  # default gray
-
 
 # Cluster colors for visualization (fill colors after clustering)
 CLUSTER_COLORS = [
@@ -127,29 +136,42 @@ CLUSTER_COLORS = [
     "#bebada",
 ]
 
-# Group outline colors (for showing regional groupings)
-GROUP_OUTLINE_COLORS = [
-    "#1b9e77",
-    "#d95f02",
-    "#7570b3",
-    "#e7298a",
-    "#66a61e",
-    "#e6ab02",
-    "#a6761d",
-    "#666666",
-    "#8dd3c7",
-    "#fb8072",
-    "#80b1d3",
-    "#fdb462",
-    "#b3de69",
-    "#fccde5",
-    "#bc80bd",
-    "#ccebc5",
-    "#ffed6f",
-    "#1f78b4",
-    "#33a02c",
-    "#fb9a99",
-]
+
+def get_outline_color(ba_id):
+    """Get the outline color for a BA based on its group."""
+    group = state.ba_to_group.get(ba_id)
+    if group and group in state.group_colors:
+        return state.group_colors[group]
+    return "#666666"  # default gray
+
+
+def get_fill_color(ba_id):
+    """Get the fill color for an unselected BA based on its group (lighter version)."""
+    group = state.ba_to_group.get(ba_id)
+    if group and group in state.group_fill_colors:
+        return state.group_fill_colors[group]
+    return "#cccccc"  # default gray
+
+
+# Styling defaults
+STYLE_UNSELECTED = {
+    "fillColor": "#cccccc",
+    "fillOpacity": 0.4,
+    "color": "#666666",
+    "weight": 1,
+}
+
+STYLE_SELECTED = {
+    "fillColor": "#2196F3",
+    "fillOpacity": 0.6,
+    "color": "#1565C0",
+    "weight": 2,
+}
+
+STYLE_HOVER = {
+    "fillOpacity": 0.8,
+    "weight": 3,
+}
 
 # ============================================================================
 # Map Functions
@@ -189,8 +211,10 @@ def update_selected_display():
     if list_el:
         if state.selected_bas:
             sorted_bas = sorted(state.selected_bas)
-            html = "".join(f'<span class="ba-tag">{ba}</span>' for ba in sorted_bas)
-            list_el.innerHTML = html
+            html_list = "".join(
+                f'<span class="ba-tag">{ba}</span>' for ba in sorted_bas
+            )
+            list_el.innerHTML = html_list
         else:
             list_el.innerHTML = "<em>None selected</em>"
 
@@ -377,7 +401,7 @@ async def init_map():
 
 
 async def load_data():
-    """Load hierarchy and transmission CSVs."""
+    """Load hierarchy, transmission, and plant CSVs."""
     update_loading_text("Loading hierarchy data...")
 
     response = await fetch("./data/hierarchy.csv")
@@ -404,6 +428,24 @@ async def load_data():
         )
     transmission_text = await response.text()
     state.transmission_df = pd.read_csv(StringIO(transmission_text))
+
+    update_loading_text("Loading plant data...")
+
+    response = await fetch("./data/reeds_generators_transformed.csv")
+    if not response.ok:
+        raise Exception(
+            f"Failed to load plant data CSV: {response.status} {response.statusText}"
+        )
+    plant_text = await response.text()
+    state.plants_df = pd.read_csv(StringIO(plant_text))
+
+    response = await fetch("./data/plant_region_map.csv")
+    if not response.ok:
+        raise Exception(
+            f"Failed to load plant-region map CSV: {response.status} {response.statusText}"
+        )
+    plant_map_text = await response.text()
+    state.plant_region_map = pd.read_csv(StringIO(plant_map_text))
 
 
 def hex_to_rgb(hex_color):
@@ -1205,6 +1247,441 @@ def generate_yaml(model_regions, region_aggregations):
 
 
 # ============================================================================
+# Plant Clustering
+# ============================================================================
+
+
+# Lightweight technology grouping for clustering heuristics
+
+
+ALWAYS_ONE_TECHS = {
+    "Conventional Hydroelectric",
+    "Run of River Hydroelectric",
+    "Solar Photovoltaic",
+    "Onshore Wind Turbine",
+    "Offshore Wind Turbine",
+    "Batteries",
+    "Hydroelectric Pumped Storage",
+}
+
+
+# Default grouping and omit behavior for plant clustering UI
+DEFAULT_TECH_GROUPS = {
+    "Biomass": {
+        "Biomass",
+        "Landfill Gas",
+        "Municipal Solid Waste",
+        "Other Waste Biomass",
+        "Wood/Wood Waste Biomass",
+    },
+    "Other_peaker": {
+        "Natural Gas Internal Combustion Engine",
+        "Petroleum Liquids",
+    },
+}
+
+
+def clone_group_map(group_map):
+    """Shallow clone of group map with set copies."""
+    return {name: set(values) for name, values in group_map.items()}
+
+
+def normalize_technology(tech_name, omit_tokens=None):
+    """Map technology names to canonical groups; return None to exclude."""
+    if not isinstance(tech_name, str):
+        return None
+
+    name = tech_name.lower()
+
+    default_omit = ["solar thermal", "all other", "flywheel"]
+    tokens = [t.lower() for t in (omit_tokens if omit_tokens is not None else default_omit)]
+
+    if any(token in name for token in tokens):
+        return None
+
+    # Specific matches first
+    if "pumped storage" in name:
+        return "Hydroelectric Pumped Storage"
+    if "run of river" in name:
+        return "Run of River Hydroelectric"
+    if "conventional hydro" in name or "hydroelectric" in name:
+        return "Conventional Hydroelectric"
+    if "landfill gas" in name:
+        return "Landfill Gas"
+    if "municipal solid waste" in name:
+        return "Municipal Solid Waste"
+    if "other waste biomass" in name:
+        return "Other Waste Biomass"
+    if "wood" in name:
+        return "Wood/Wood Waste Biomass"
+    if "biomass" in name:
+        return "Biomass"
+    if "geothermal" in name:
+        return "Geothermal"
+    if "nuclear" in name:
+        return "Nuclear"
+    if "combined cycle" in name:
+        return "Natural Gas Fired Combined Cycle"
+    if "combustion turbine" in name:
+        return "Natural Gas Fired Combustion Turbine"
+    if "steam turbine" in name:
+        return "Natural Gas Steam Turbine"
+    if "internal combustion" in name:
+        return "Natural Gas Internal Combustion Engine"
+    if "steam coal" in name or "coal" in name:
+        return "Conventional Steam Coal"
+    if "photovoltaic" in name:
+        return "Solar Photovoltaic"
+    if "offshore wind" in name:
+        return "Offshore Wind Turbine"
+    if "wind" in name:
+        return "Onshore Wind Turbine"
+    if "battery" in name or "storage" in name:
+        return "Batteries"
+    if "petroleum" in name or "oil" in name:
+        return "Petroleum Liquids"
+
+    return tech_name
+
+
+def weighted_quantile(values, quantile, weights):
+    """Compute weighted quantile; expects numpy arrays."""
+    sorter = np.argsort(values)
+    v_sorted = values[sorter]
+    w_sorted = weights[sorter]
+    cum_weights = np.cumsum(w_sorted)
+    cutoff = quantile * cum_weights[-1]
+    return v_sorted[np.searchsorted(cum_weights, cutoff)]
+
+
+def weighted_iqr(values, weights):
+    """Weighted interquartile range (Q3 - Q1)."""
+    if len(values) == 0:
+        return 0.0
+    return float(
+        weighted_quantile(values, 0.75, weights)
+        - weighted_quantile(values, 0.25, weights)
+    )
+
+
+def standardize_features(matrix):
+    """Standardize columns to zero mean, unit variance."""
+    means = np.nanmean(matrix, axis=0)
+    stds = np.nanstd(matrix, axis=0)
+    stds = np.where(stds == 0, 1.0, stds)
+    return (matrix - means) / stds
+
+
+def run_kmeans_simple(features, k, weights=None, max_iter=40, seed=42):
+    """Simple k-means implementation returning (inertia, centers, labels)."""
+    rng = np.random.default_rng(seed)
+    n_samples = features.shape[0]
+    if k <= 0 or n_samples == 0:
+        return 0.0, None, None
+
+    # Initialize centers from samples
+    init_idx = rng.choice(n_samples, size=min(k, n_samples), replace=False)
+    centers = features[init_idx]
+
+    labels = np.zeros(n_samples, dtype=int)
+
+    for _ in range(max_iter):
+        # Assign
+        dists = np.linalg.norm(features[:, None, :] - centers[None, :, :], axis=2) ** 2
+        labels = np.argmin(dists, axis=1)
+
+        # Update
+        new_centers = []
+        for i in range(k):
+            mask = labels == i
+            if not np.any(mask):
+                # Keep old center if empty
+                new_centers.append(centers[i])
+                continue
+
+            cluster_points = features[mask]
+            if weights is not None:
+                cluster_weights = weights[mask][:, None]
+                new_center = (cluster_points * cluster_weights).sum(
+                    axis=0
+                ) / cluster_weights.sum()
+            else:
+                new_center = cluster_points.mean(axis=0)
+            new_centers.append(new_center)
+
+        new_centers = np.vstack(new_centers)
+        if np.allclose(new_centers, centers):
+            centers = new_centers
+            break
+        centers = new_centers
+
+    # Compute inertia
+    inertia = 0.0
+    for i in range(k):
+        mask = labels == i
+        if not np.any(mask):
+            continue
+        cluster_points = features[mask]
+        cluster_center = centers[i]
+        sq_dists = np.sum((cluster_points - cluster_center) ** 2, axis=1)
+        if weights is not None:
+            inertia += float((sq_dists * weights[mask]).sum())
+        else:
+            inertia += float(sq_dists.sum())
+
+    return inertia, centers, labels
+
+
+def inertia_single_cluster(features, weights=None):
+    """Inertia for a single cluster (k=1)."""
+    center = features.mean(axis=0)
+    sq_dists = np.sum((features - center) ** 2, axis=1)
+    if weights is not None:
+        return float((sq_dists * weights).sum())
+    return float(sq_dists.sum())
+
+
+def build_ba_to_model_region_map():
+    """Return BA -> model region lookup using current clustering (or identity)."""
+    if state.region_aggregations:
+        mapping = {}
+        for region_name, bas in state.region_aggregations.items():
+            for ba in bas:
+                mapping[ba] = region_name
+        # Keep any unseen BAs mapped to themselves so plants are not dropped
+        for ba in state.all_bas:
+            mapping.setdefault(ba, ba)
+        return mapping
+
+    # Fallback to identity mapping (each BA is its own model region)
+    return {ba: ba for ba in state.all_bas}
+
+
+def apply_default_grouping(tech_group, enabled=True, group_map=None):
+    """Collapse technologies into groups using provided map when enabled."""
+    if not enabled:
+        return tech_group
+    mapping = group_map if group_map is not None else DEFAULT_TECH_GROUPS
+    for group_name, members in mapping.items():
+        if tech_group in members:
+            return group_name
+    return tech_group
+
+
+def prepare_plants_dataframe(
+    *,
+    group_enabled=True,
+    omit_tokens=None,
+    group_map=None,
+):
+    """Merge plant data with BA mapping and apply technology grouping."""
+    if state.plants_df is None or state.plant_region_map is None:
+        raise Exception("Plant data not loaded yet")
+
+    ba_to_region = build_ba_to_model_region_map()
+
+    df = state.plants_df.merge(state.plant_region_map, on="plant_id", how="left")
+
+    # Map BA regions to model regions
+    df["model_region"] = df["region"].map(ba_to_region)
+    df = df.dropna(subset=["model_region"])
+
+    # Normalize technologies and optionally group/omit
+    df["tech_group"] = df["technology"].apply(
+        lambda t: normalize_technology(t, omit_tokens=omit_tokens)
+    )
+    df = df[df["tech_group"].notna()].copy()
+    df["tech_group"] = df["tech_group"].apply(
+        lambda t: apply_default_grouping(t, enabled=group_enabled, group_map=group_map)
+    )
+
+    # Ensure numeric columns are present
+    df["capacity_mw"] = pd.to_numeric(df["capacity_mw"], errors="coerce").fillna(0)
+    df["heat_rate_mmbtu_mwh"] = pd.to_numeric(
+        df["heat_rate_mmbtu_mwh"], errors="coerce"
+    )
+    df["fom_per_mwyr"] = pd.to_numeric(df["fom_per_mwyr"], errors="coerce")
+
+    return df
+
+
+def suggest_plant_clusters(
+    budget=200,
+    cap_threshold=1500.0,
+    hr_iqr_threshold=0.8,
+    *,
+    group_enabled=True,
+    omit_tokens=None,
+    group_map=None,
+):
+    """Suggest cluster counts per (model_region, tech_group) under a hard budget."""
+    df = prepare_plants_dataframe(
+        group_enabled=group_enabled,
+        omit_tokens=omit_tokens,
+        group_map=group_map,
+    )
+
+    groups = []
+    raw_tech_map = {}  # normalized -> set(raw tech names)
+
+    for (model_region, tech_group), sub in df.groupby(["model_region", "tech_group"]):
+        n_units = len(sub)
+        total_cap = float(sub["capacity_mw"].sum())
+
+        # Features
+        heat_rate = sub["heat_rate_mmbtu_mwh"].to_numpy()
+        fom = sub["fom_per_mwyr"].to_numpy()
+        weights = sub["capacity_mw"].replace(0, 1e-6).to_numpy()
+
+        # Fill missing values with medians to keep clustering stable
+        hr_median = np.nanmedian(heat_rate) if not np.all(np.isnan(heat_rate)) else 0.0
+        fom_median = np.nanmedian(fom) if not np.all(np.isnan(fom)) else 0.0
+        hr_filled = np.where(np.isnan(heat_rate), hr_median, heat_rate)
+        fom_filled = np.where(np.isnan(fom), fom_median, fom)
+        features = np.column_stack([hr_filled, fom_filled])
+        standardized = standardize_features(features)
+
+        hr_iqr_val = weighted_iqr(hr_filled, weights)
+
+        # K-means improvement for k=2
+        improvement2 = 0.0
+        if n_units >= 2:
+            inertia1 = inertia_single_cluster(standardized, weights)
+            inertia2, _, _ = run_kmeans_simple(standardized, 2, weights=weights)
+            if inertia1 > 0:
+                improvement2 = max(0.0, (inertia1 - inertia2) / inertia1)
+
+        desired = 1
+        if n_units >= 2 and (
+            total_cap >= cap_threshold
+            or hr_iqr_val >= hr_iqr_threshold
+            or improvement2 >= 0.15
+        ):
+            desired = min(2, n_units)
+
+        if n_units >= 3 and improvement2 >= 0.3:
+            desired = min(3, n_units)
+
+        priority = total_cap * (1.0 + hr_iqr_val) * (1.0 + improvement2)
+
+        raw_tech_map.setdefault(tech_group, set()).update(
+            sub["technology"].dropna().unique()
+        )
+
+        groups.append(
+            {
+                "model_region": model_region,
+                "tech_group": tech_group,
+                "n_units": n_units,
+                "total_capacity": total_cap,
+                "hr_iqr": hr_iqr_val,
+                "improvement2": improvement2,
+                "desired": desired,
+                "priority": priority,
+            }
+        )
+
+    # Enforce single-cluster techs
+    for g in groups:
+        if g["tech_group"] in ALWAYS_ONE_TECHS:
+            g["desired"] = 1
+            g["num_clusters"] = 1
+            g["alt_num_clusters"] = 1
+
+    if not groups:
+        raise Exception("No plants found for current model regions")
+
+    # Allocate clusters within budget
+    num_groups = len(groups)
+    min_possible = num_groups  # at least 1 per group
+    effective_budget = max(budget, min_possible)
+
+    for g in groups:
+        g["num_clusters"] = 1
+
+    remaining = effective_budget - num_groups
+
+    for g in sorted(groups, key=lambda x: x["priority"], reverse=True):
+        if g["tech_group"] in ALWAYS_ONE_TECHS:
+            continue
+        extra_needed = max(0, g["desired"] - g["num_clusters"])
+        if remaining <= 0 or extra_needed == 0:
+            continue
+        extra = min(extra_needed, remaining)
+        g["num_clusters"] += extra
+        remaining -= extra
+
+    # Alt clusters are a gentle +1 where possible
+    for g in groups:
+        if g["tech_group"] in ALWAYS_ONE_TECHS:
+            g["alt_num_clusters"] = 1
+        else:
+            g["alt_num_clusters"] = min(g["num_clusters"] + 1, g["n_units"])
+
+    # Compute defaults and overrides
+    defaults = {}
+    tech_to_counts = {}
+    tech_to_alt = {}
+    for g in groups:
+        tech_to_counts.setdefault(g["tech_group"], []).append(g["num_clusters"])
+        tech_to_alt.setdefault(g["tech_group"], []).append(g["alt_num_clusters"])
+
+    for tech, counts in tech_to_counts.items():
+        min_count = min(counts) if counts else 1
+        default_num = min_count if min_count > 1 else 1
+        alt_counts = tech_to_alt.get(tech, [])
+        default_alt = min(alt_counts) if alt_counts else default_num
+        default_alt = max(default_alt, default_num)
+        defaults[tech] = int(default_num)
+
+    overrides = {}
+    total_clusters = 0
+    for g in groups:
+        total_clusters += g["num_clusters"]
+        d = defaults[g["tech_group"]]
+        if g["num_clusters"] != d:
+            overrides.setdefault(g["model_region"], {})[g["tech_group"]] = int(
+                g["num_clusters"]
+            )
+
+    # Top candidates for further splitting (where desired > assigned)
+    candidates = [
+        g for g in groups if g["num_clusters"] < g["desired"] and g["desired"] > 1
+    ]
+    candidates = sorted(candidates, key=lambda x: x["priority"], reverse=True)[:10]
+
+    state.plant_candidates = candidates
+
+    if group_enabled:
+        active_map = group_map if group_map is not None else DEFAULT_TECH_GROUPS
+        tech_groups = {
+            name: sorted(list(members)) for name, members in active_map.items()
+        }
+    else:
+        tech_groups = {
+            tech: sorted(list(raw_tech_map.get(tech, []))) for tech in sorted(defaults)
+        }
+
+    overrides_sorted = {
+        region: {tech: int(val) for tech, val in sorted(tech_map.items())}
+        for region, tech_map in sorted(overrides.items())
+    }
+
+    group_flag = group_enabled and any(len(v) > 0 for v in tech_groups.values())
+
+    output = {
+        "num_clusters": {tech: int(val) for tech, val in sorted(defaults.items())},
+        "group_technologies": bool(group_flag),
+        "tech_groups": tech_groups,
+        "alt_num_clusters": overrides_sorted,
+    }
+
+    yaml_str = yaml.dump(output, default_flow_style=False, sort_keys=False)
+
+    return yaml_str, total_clusters, effective_budget
+
+
+# ============================================================================
 # Event Handlers
 # ============================================================================
 
@@ -1293,6 +1770,9 @@ def on_run_clustering(event):
 
     # Update transmission lines if enabled
     update_transmission_lines()
+
+    # Refresh plant cluster defaults based on new region mapping
+    update_default_cluster_budget()
 
 
 def update_map_cluster_colors(region_aggregations):
@@ -1536,6 +2016,9 @@ def on_clear_selection(event):
     # Update transmission lines (will show BA lines if toggle is on)
     update_transmission_lines()
 
+    # Reset plant cluster defaults to BA-level mapping
+    update_default_cluster_budget()
+
 
 # ============================================================================
 # Box Selection Mode
@@ -1704,6 +2187,352 @@ def on_download_yaml(event):
     set_status("YAML downloaded!", "success")
 
 
+def render_plant_candidates():
+    """Render the top plant split candidates list."""
+    container = document.getElementById("plantCandidateList")
+    if not container:
+        return
+
+    if not state.plant_candidates:
+        container.innerHTML = (
+            "<em>No additional splits recommended within the current budget.</em>"
+        )
+        return
+
+    parts = []
+    for g in state.plant_candidates:
+        parts.append(
+            f"<div class='candidate-item'><strong>{g['model_region']}</strong> — {g['tech_group']} (desired {g['desired']}, assigned {g['num_clusters']}; {g['total_capacity']:.0f} MW, HR IQR {g['hr_iqr']:.2f})</div>"
+        )
+    container.innerHTML = "".join(parts)
+
+
+# --------------------------------------------------------------------------
+# Interactive tech grouping UI helpers
+# --------------------------------------------------------------------------
+
+
+def get_normalized_techs(omit_tokens=None):
+    """Return sorted list of normalized technologies from the plant data."""
+    if state.plants_df is None:
+        return []
+
+    techs = set()
+    for tech in state.plants_df.get("technology", []):
+        normalized = normalize_technology(tech, omit_tokens=omit_tokens)
+        if normalized:
+            techs.add(normalized)
+    return sorted(techs)
+
+
+def get_selected_omit_tokens():
+    """Read omit tokens from the UI multi-select; default if empty."""
+    el = document.getElementById("omitTechSelect")
+    tokens = []
+    if el and hasattr(el, "selectedOptions"):
+        tokens = [opt.value for opt in el.selectedOptions]
+    if not tokens:
+        tokens = ["solar thermal", "all other", "flywheel"]
+    return tokens
+
+
+def calculate_min_clusters_and_default():
+    """Return (min_clusters, default_clusters) based on current tech grouping/omits."""
+    group_checkbox = document.getElementById("groupTechDefault")
+    group_enabled = group_checkbox.checked if group_checkbox else True
+    omit_tokens = get_selected_omit_tokens()
+
+    active_group_map = None
+    if group_enabled:
+        active_group_map = (
+            clone_group_map(state.custom_tech_groups)
+            if state.custom_tech_groups
+            else clone_group_map(DEFAULT_TECH_GROUPS)
+        )
+
+    df = prepare_plants_dataframe(
+        group_enabled=group_enabled,
+        omit_tokens=omit_tokens,
+        group_map=active_group_map,
+    )
+
+    # One cluster per (model_region, tech_group) is the floor
+    min_clusters = int(df.groupby(["model_region", "tech_group"]).ngroups)
+    default_clusters = max(1, math.ceil(min_clusters * 1.15))
+    return min_clusters, default_clusters
+
+
+def update_default_cluster_budget(event=None):
+    """Compute minimum clusters and set the default budget to +15%."""
+    budget_input = document.getElementById("plantBudget")
+    helper_text = document.getElementById("plantBudgetInfo")
+    try:
+        min_clusters, default_clusters = calculate_min_clusters_and_default()
+    except Exception:
+        # Skip updates if data not ready
+        return
+
+    if budget_input:
+        budget_input.value = str(default_clusters)
+
+    if helper_text:
+        helper_text.textContent = (
+            f"Minimum clusters: {min_clusters}. Default set to {default_clusters} (+15%)."
+        )
+
+
+def ensure_current_group():
+    """Ensure the currently selected group exists."""
+    if state.current_group and state.current_group in state.custom_tech_groups:
+        return
+    if state.custom_tech_groups:
+        state.current_group = sorted(state.custom_tech_groups.keys())[0]
+    else:
+        state.current_group = None
+
+
+def reset_custom_groups(omit_tokens=None):
+    """Reset custom grouping to defaults and recompute available tech list."""
+    state.custom_tech_groups = clone_group_map(DEFAULT_TECH_GROUPS)
+    state.current_group = sorted(state.custom_tech_groups.keys())[0]
+    normalized = set(get_normalized_techs(omit_tokens=omit_tokens))
+    grouped = set()
+    for members in state.custom_tech_groups.values():
+        grouped.update(members)
+    state.available_techs = normalized - grouped
+    render_group_editor()
+    update_default_cluster_budget()
+
+
+def clear_custom_groups(omit_tokens=None):
+    """Clear all groupings; make all techs available."""
+    state.custom_tech_groups = {}
+    state.current_group = None
+    state.available_techs = set(get_normalized_techs(omit_tokens=omit_tokens))
+    render_group_editor()
+    update_default_cluster_budget()
+
+
+def render_group_editor():
+    """Render dual-list grouping UI (available vs selected for current group)."""
+    group_select = document.getElementById("groupSelectDual")
+    avail_list = document.getElementById("availableList")
+    group_list = document.getElementById("groupList")
+    empty_notice = document.getElementById("groupEmptyNotice")
+
+    ensure_current_group()
+
+    # Populate group dropdown
+    if group_select:
+        group_select.innerHTML = "".join(
+            [
+                f"<option value='{html.escape(name)}' {'selected' if name == state.current_group else ''}>{html.escape(name)}</option>"
+                for name in sorted(state.custom_tech_groups.keys())
+            ]
+        )
+
+    # Show empty notice when no groups
+    if empty_notice:
+        empty_notice.style.display = "block" if not state.custom_tech_groups else "none"
+
+    # Available list
+    if avail_list:
+        avail_list.innerHTML = "".join(
+            [
+                f"<option value='{tech}'>{html.escape(tech)}</option>"
+                for tech in sorted(state.available_techs)
+            ]
+        )
+
+    # Current group list
+    if group_list:
+        members = (
+            state.custom_tech_groups.get(state.current_group, set())
+            if state.current_group
+            else set()
+        )
+        group_list.innerHTML = "".join(
+            [
+                f"<option value='{tech}'>{html.escape(tech)}</option>"
+                for tech in sorted(members)
+            ]
+        )
+
+
+def on_add_group(event):
+    name_input = document.getElementById("newGroupName")
+    omit_tokens = get_selected_omit_tokens()
+    if not name_input:
+        return
+    group_name = name_input.value.strip()
+    if not group_name:
+        return
+    if group_name not in state.custom_tech_groups:
+        state.custom_tech_groups[group_name] = set()
+    state.current_group = group_name
+    name_input.value = ""
+    # Ensure available list is up to date
+    state.available_techs = set(get_normalized_techs(omit_tokens=omit_tokens))
+    for members in state.custom_tech_groups.values():
+        state.available_techs -= members
+    render_group_editor()
+    update_default_cluster_budget()
+
+
+def on_add_tech_to_group(event):
+    avail_list = document.getElementById("availableList")
+    if not avail_list:
+        return
+    ensure_current_group()
+    if not state.current_group:
+        return
+    selected = [opt.value for opt in avail_list.selectedOptions]
+    if not selected:
+        return
+    state.custom_tech_groups.setdefault(state.current_group, set()).update(selected)
+    state.available_techs -= set(selected)
+    render_group_editor()
+    update_default_cluster_budget()
+
+
+def on_remove_tech_from_group(event):
+    group_list = document.getElementById("groupList")
+    if not group_list:
+        return
+    ensure_current_group()
+    if not state.current_group:
+        return
+    selected = [opt.value for opt in group_list.selectedOptions]
+    if not selected:
+        return
+    for tech in selected:
+        if tech in state.custom_tech_groups.get(state.current_group, set()):
+            state.custom_tech_groups[state.current_group].remove(tech)
+            state.available_techs.add(tech)
+    render_group_editor()
+    update_default_cluster_budget()
+
+
+def on_group_change(event):
+    select = document.getElementById("groupSelectDual")
+    if select:
+        state.current_group = select.value or None
+    render_group_editor()
+
+
+def on_reset_groups(event):
+    omit_tokens = get_selected_omit_tokens()
+    reset_custom_groups(omit_tokens=omit_tokens)
+
+
+def on_clear_groups(event):
+    omit_tokens = get_selected_omit_tokens()
+    clear_custom_groups(omit_tokens=omit_tokens)
+
+
+def refresh_groups_for_omit_change(event=None):
+    """Recompute available techs when omit setting changes."""
+    omit_tokens = get_selected_omit_tokens()
+    normalized = set(get_normalized_techs(omit_tokens=omit_tokens))
+    # Keep existing assignments if still valid
+    for group, members in list(state.custom_tech_groups.items()):
+        state.custom_tech_groups[group] = {m for m in members if m in normalized}
+    assigned = (
+        set().union(*state.custom_tech_groups.values())
+        if state.custom_tech_groups
+        else set()
+    )
+    state.available_techs = normalized - assigned
+    ensure_current_group()
+    render_group_editor()
+    update_default_cluster_budget()
+
+
+def on_run_plant_clustering(event):
+    """Handle plant clustering run."""
+    try:
+        budget_val = int(document.getElementById("plantBudget").value)
+        cap_thresh = float(document.getElementById("capThreshold").value)
+        hr_thresh = float(document.getElementById("hrThreshold").value)
+        group_checkbox = document.getElementById("groupTechDefault")
+        omit_tokens = get_selected_omit_tokens()
+        group_enabled = group_checkbox.checked if group_checkbox else True
+
+        active_group_map = None
+        if group_enabled:
+            # If user customized groups, prefer those; otherwise fall back to defaults
+            active_group_map = (
+                clone_group_map(state.custom_tech_groups)
+                if state.custom_tech_groups
+                else clone_group_map(DEFAULT_TECH_GROUPS)
+            )
+
+        yaml_str, total_clusters, effective_budget = suggest_plant_clusters(
+            budget=budget_val,
+            cap_threshold=cap_thresh,
+            hr_iqr_threshold=hr_thresh,
+            group_enabled=group_enabled,
+            omit_tokens=omit_tokens,
+            group_map=active_group_map,
+        )
+    except Exception as exc:
+        set_status(f"Plant clustering error: {exc}", "error")
+        result_el = document.getElementById("plantResultText")
+        if result_el:
+            result_el.textContent = f"Plant clustering error: {exc}"
+            result_el.className = "status error"
+        return
+
+    yaml_el = document.getElementById("plantYamlOut")
+    if yaml_el is not None:
+        yaml_el.value = yaml_str
+
+    render_plant_candidates()
+
+    note = ""
+    if effective_budget > budget_val:
+        note = " (budget raised to minimum needed for one cluster per tech/region)"
+
+    result_el = document.getElementById("plantResultText")
+    if result_el:
+        result_el.textContent = (
+            f"Plant clustering ready: {total_clusters} clusters across technologies{note}."
+        )
+        result_el.className = "status success"
+
+    set_status(
+        f"Plant clustering ready: {total_clusters} clusters across techs{note}.",
+        "success",
+    )
+
+
+def on_copy_plant_yaml(event):
+    """Copy plant YAML to clipboard."""
+    yaml_el = document.getElementById("plantYamlOut")
+    if yaml_el and yaml_el.value:
+        window.navigator.clipboard.writeText(yaml_el.value)
+        set_status("Plant YAML copied to clipboard!", "success")
+
+
+def on_download_plant_yaml(event):
+    """Download plant YAML file."""
+    yaml_el = document.getElementById("plantYamlOut")
+    if not yaml_el or not yaml_el.value:
+        set_status("No plant YAML to download. Run plant clustering first.", "error")
+        return
+
+    blob = window.Blob.new([yaml_el.value], to_js({"type": "text/yaml"}))
+    url = window.URL.createObjectURL(blob)
+
+    a = document.createElement("a")
+    a.href = url
+    a.download = "plant_clusters.yml"
+    a.click()
+
+    window.URL.revokeObjectURL(url)
+    set_status("Plant YAML downloaded!", "success")
+
+
 def on_grouping_change(event):
     """Handle grouping column change."""
     update_no_cluster_options()
@@ -1746,8 +2575,41 @@ async def main():
         document.getElementById("downloadYamlBtn").addEventListener(
             "click", create_proxy(on_download_yaml)
         )
+        document.getElementById("runPlantBtn").addEventListener(
+            "click", create_proxy(on_run_plant_clustering)
+        )
+        document.getElementById("copyPlantYamlBtn").addEventListener(
+            "click", create_proxy(on_copy_plant_yaml)
+        )
+        document.getElementById("downloadPlantYamlBtn").addEventListener(
+            "click", create_proxy(on_download_plant_yaml)
+        )
+        document.getElementById("groupTechDefault").addEventListener(
+            "change", create_proxy(update_default_cluster_budget)
+        )
         document.getElementById("groupingColumn").addEventListener(
             "change", create_proxy(on_grouping_change)
+        )
+        document.getElementById("addGroupBtn").addEventListener(
+            "click", create_proxy(on_add_group)
+        )
+        document.getElementById("moveToGroupBtn").addEventListener(
+            "click", create_proxy(on_add_tech_to_group)
+        )
+        document.getElementById("moveToAvailableBtn").addEventListener(
+            "click", create_proxy(on_remove_tech_from_group)
+        )
+        document.getElementById("resetGroupsBtn").addEventListener(
+            "click", create_proxy(on_reset_groups)
+        )
+        document.getElementById("clearGroupsBtn").addEventListener(
+            "click", create_proxy(on_clear_groups)
+        )
+        document.getElementById("groupSelectDual").addEventListener(
+            "change", create_proxy(on_group_change)
+        )
+        document.getElementById("omitTechSelect").addEventListener(
+            "change", create_proxy(refresh_groups_for_omit_change)
         )
 
         # Box selection mode buttons
@@ -1769,6 +2631,12 @@ async def main():
         # Start in box select mode (disable map dragging)
         state.map.dragging.disable()
         document.getElementById("map").classList.add("box-select-mode")
+
+        # Initialize grouping editor with defaults
+        reset_custom_groups(omit_tokens=get_selected_omit_tokens())
+
+        # Seed the plant budget with a 15% buffer above the minimum clusters
+        update_default_cluster_budget()
 
         # Done loading
         hide_loading()
