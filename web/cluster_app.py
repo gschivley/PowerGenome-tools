@@ -10,6 +10,7 @@ This module runs in the browser via PyScript and handles:
 
 import asyncio
 import json
+import math
 import warnings
 from io import StringIO
 
@@ -45,12 +46,22 @@ class AppState:
         self.ba_layers = {}  # ba_id -> layer
         self.all_bas = set()
         self.ba_centroids = {}  # ba_id -> (lat, lng) for box selection
-        self.box_select_mode = False
+        self.box_select_mode = True  # Default to box select mode
         self.box_start = None
         self.group_colors = {}  # group_value -> outline color
         self.group_fill_colors = {}  # group_value -> light fill color
         self.ba_to_group = {}  # ba_id -> group_value
         self.current_grouping = None  # current grouping column
+        self.cluster_colors = {}  # ba_id -> cluster fill color (set after clustering)
+        self.is_clustered = False  # True after clustering has been run
+        self.ba_to_region = {}  # ba_id -> model_region name (set after clustering)
+        self.transmission_lines_layer = (
+            None  # Leaflet layer group for transmission lines
+        )
+        self.show_transmission_lines = False  # Toggle state for transmission lines
+        self.region_aggregations = (
+            None  # Store last clustering result for redrawing lines
+        )
 
 
 state = AppState()
@@ -234,21 +245,34 @@ def on_feature_click(e):
 
 
 def on_feature_mouseover(e):
-    """Handle mouseover on a BA feature."""
+    """Handle mouseover on a BA feature - subtle highlight without changing colors."""
     layer = e.target
-    layer.setStyle(to_js(STYLE_HOVER))
+    # Only increase weight slightly, don't change fill
+    layer.setStyle(to_js({"weight": 4}))
     layer.bringToFront()
 
 
 def on_feature_mouseout(e):
-    """Handle mouseout on a BA feature."""
+    """Handle mouseout on a BA feature - restore original style."""
     layer = e.target
     props = layer.feature.properties
     ba_id = props.rb
 
     outline_color = get_outline_color(ba_id)
 
-    if ba_id in state.selected_bas:
+    # If clustering has been run, use cluster colors for selected BAs
+    if state.is_clustered and ba_id in state.cluster_colors:
+        layer.setStyle(
+            to_js(
+                {
+                    "fillColor": state.cluster_colors[ba_id],
+                    "fillOpacity": 0.7,
+                    "color": outline_color,
+                    "weight": 3,
+                }
+            )
+        )
+    elif ba_id in state.selected_bas:
         layer.setStyle(
             to_js(
                 {
@@ -286,8 +310,8 @@ def on_each_feature(feature, layer):
     center = bounds.getCenter()
     state.ba_centroids[ba_id] = (center.lat, center.lng)
 
-    # Tooltip
-    tooltip = f"<b>{ba_id}</b><br>State: {props.st}<br>RTO: {props.rto}"
+    # Initial tooltip (will be updated when data loads)
+    tooltip = f"<b>{ba_id}</b><br>State: {props.st}"
     layer.bindTooltip(tooltip)
 
     # Events
@@ -318,6 +342,10 @@ async def init_map():
             }
         ),
     ).addTo(state.map)
+
+    # Create custom pane for transmission lines (above overlays, z-index 450)
+    state.map.createPane("transmissionPane")
+    state.map.getPane("transmissionPane").style.zIndex = 450
 
     # Load GeoJSON
     update_loading_text("Loading BA boundaries...")
@@ -465,6 +493,42 @@ def apply_group_colors_to_map():
             )
 
 
+def update_tooltips():
+    """Update all BA tooltips to show the current grouping column value."""
+    if state.hierarchy_df is None:
+        return
+
+    grouping_col = document.getElementById("groupingColumn").value
+
+    # Get friendly name for the grouping column from the dropdown text
+    grouping_select = document.getElementById("groupingColumn")
+    selected_option = grouping_select.options.item(grouping_select.selectedIndex)
+    grouping_label = selected_option.text.split(" (")[
+        0
+    ]  # Get just the column name part
+
+    # Build a lookup from BA to hierarchy row
+    ba_data = {}
+    for _, row in state.hierarchy_df.iterrows():
+        ba_data[row["ba"]] = row
+
+    # Update each layer's tooltip
+    for ba_id, layer in state.ba_layers.items():
+        if ba_id in ba_data:
+            row = ba_data[ba_id]
+            state_val = row.get("st", "N/A")
+            group_val = row.get(grouping_col, "N/A")
+
+            # Include model region if clustering has been done
+            if state.is_clustered and ba_id in state.ba_to_region:
+                region_name = state.ba_to_region[ba_id]
+                tooltip = f"<b>{ba_id}</b><br>State: {state_val}<br>{grouping_label}: {group_val}<br><b>Region: {region_name}</b>"
+            else:
+                tooltip = f"<b>{ba_id}</b><br>State: {state_val}<br>{grouping_label}: {group_val}"
+            layer.unbindTooltip()
+            layer.bindTooltip(tooltip)
+
+
 def update_no_cluster_options():
     """Update the no-cluster checkbox options based on grouping column."""
     grouping_col = document.getElementById("groupingColumn").value
@@ -475,6 +539,9 @@ def update_no_cluster_options():
 
     # Update group colors when grouping changes
     update_group_colors()
+
+    # Update tooltips to show new grouping column
+    update_tooltips()
 
     # Get unique values for this column
     unique_values = sorted(state.hierarchy_df[grouping_col].unique())
@@ -622,30 +689,80 @@ def spectral_cluster(graph, n_clusters):
 
 
 def generate_cluster_names(clusters, groups):
-    """Generate meaningful cluster names based on regional groups."""
+    """Generate meaningful cluster names based on smallest containing grouping column.
+
+    For aggregated regions: Find the smallest grouping column where all BAs share
+    the same value, then name as <group_value><x> where x is an integer.
+    For single BAs: Use the state abbreviation.
+    """
+    # Grouping columns ordered from smallest to largest geographic scope
+    GROUPING_HIERARCHY = [
+        "st",
+        "cendiv",
+        "transgrp",
+        "nercr",
+        "transreg",
+        "interconnect",
+    ]
+
     cluster_names = {}
-    name_counts = {}
+    name_counts = {}  # Track counts for each base name
 
     for label, nodes in clusters.items():
-        # Find which groups these nodes belong to
-        group_names = set()
-        for group_name, group_bas in groups.items():
-            if nodes & group_bas:
-                group_names.add(group_name)
+        nodes_list = list(nodes)
 
-        if group_names:
-            name = "+".join(sorted(group_names))
+        # Single BA - use state abbreviation
+        if len(nodes_list) == 1:
+            ba = nodes_list[0]
+            # Get state for this BA
+            ba_row = state.hierarchy_df[state.hierarchy_df["ba"] == ba]
+            if not ba_row.empty:
+                st = ba_row.iloc[0]["st"]
+                base_name = st
+            else:
+                base_name = ba
+
+            # Add counter if needed
+            if base_name in name_counts:
+                name_counts[base_name] += 1
+                cluster_names[label] = f"{base_name}{name_counts[base_name]}"
+            else:
+                name_counts[base_name] = 1
+                cluster_names[label] = f"{base_name}1"
+            continue
+
+        # Multiple BAs - find smallest containing grouping column
+        found_group = None
+        group_value = None
+
+        for col in GROUPING_HIERARCHY:
+            if col not in state.hierarchy_df.columns:
+                continue
+
+            # Get values for all BAs in this cluster
+            ba_values = state.hierarchy_df[state.hierarchy_df["ba"].isin(nodes)][
+                col
+            ].unique()
+
+            # If all BAs share the same value, use this column
+            if len(ba_values) == 1:
+                found_group = col
+                group_value = ba_values[0]
+                break
+
+        if group_value:
+            base_name = group_value
         else:
-            name = f"Cluster_{label}"
+            # No common grouping found, use generic name
+            base_name = "Region"
 
-        # Handle duplicates
-        if name in name_counts:
-            name_counts[name] += 1
-            name = f"{name}_{name_counts[name]}"
+        # Add counter
+        if base_name in name_counts:
+            name_counts[base_name] += 1
+            cluster_names[label] = f"{base_name}{name_counts[base_name]}"
         else:
-            name_counts[name] = 1
-
-        cluster_names[label] = name
+            name_counts[base_name] = 1
+            cluster_names[label] = f"{base_name}1"
 
     return cluster_names
 
@@ -676,9 +793,28 @@ def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_gro
         cluster_bas = selected_bas - unclustered_bas
 
         if len(cluster_bas) < 2:
-            # Only unclustered BAs
-            model_regions = sorted(selected_bas)
-            region_aggregations = {ba: [ba] for ba in selected_bas}
+            # Only unclustered BAs - use state abbreviation naming
+            region_aggregations = {}
+            name_counts = {}
+
+            for ba in sorted(selected_bas):
+                ba_row = state.hierarchy_df[state.hierarchy_df["ba"] == ba]
+                if not ba_row.empty:
+                    st = ba_row.iloc[0]["st"]
+                    base_name = st
+                else:
+                    base_name = ba
+
+                if base_name in name_counts:
+                    name_counts[base_name] += 1
+                    region_name = f"{base_name}{name_counts[base_name]}"
+                else:
+                    name_counts[base_name] = 1
+                    region_name = f"{base_name}1"
+
+                region_aggregations[region_name] = [ba]
+
+            model_regions = sorted(region_aggregations.keys())
             return model_regions, region_aggregations, None
 
         # Build graph for clustering
@@ -699,13 +835,40 @@ def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_gro
 
         # Build output
         region_aggregations = {}
+        name_counts = {}  # Track name counts from cluster names
+
+        # First, collect all base names used in cluster names to track counts
+        for label, name in cluster_names.items():
+            # Extract base name (remove trailing digits)
+            base = name.rstrip("0123456789")
+            num_str = name[len(base) :]
+            if num_str:
+                num = int(num_str)
+                name_counts[base] = max(name_counts.get(base, 0), num)
+
         for label, nodes in clusters.items():
             name = cluster_names[label]
             region_aggregations[name] = sorted(nodes)
 
-        # Add unclustered BAs
+        # Add unclustered BAs with state abbreviation naming
         for ba in sorted(unclustered_bas):
-            region_aggregations[ba] = [ba]
+            # Get state for this BA
+            ba_row = state.hierarchy_df[state.hierarchy_df["ba"] == ba]
+            if not ba_row.empty:
+                st = ba_row.iloc[0]["st"]
+                base_name = st
+            else:
+                base_name = ba
+
+            # Add counter
+            if base_name in name_counts:
+                name_counts[base_name] += 1
+                region_name = f"{base_name}{name_counts[base_name]}"
+            else:
+                name_counts[base_name] = 1
+                region_name = f"{base_name}1"
+
+            region_aggregations[region_name] = [ba]
 
         model_regions = sorted(region_aggregations.keys())
 
@@ -762,27 +925,47 @@ def on_run_clustering(event):
     if yaml_el:
         yaml_el.value = yaml_output
 
-    set_status(f"Clustering complete! {len(model_regions)} regions created.", "success")
+    # Check if we got more regions than targeted
+    num_regions = len(model_regions)
+    if num_regions > target_regions:
+        set_status(
+            f"Warning: Created {num_regions} regions, which is more than the target of {target_regions}. "
+            f"This can happen when 'unclustered' groups or disconnected BAs exceed the target.",
+            "error",
+        )
+    else:
+        set_status(f"Clustering complete! {num_regions} regions created.", "success")
+
+    # Store region aggregations for transmission line drawing
+    state.region_aggregations = region_aggregations
 
     # Update map colors to show clusters
     update_map_cluster_colors(region_aggregations)
 
+    # Update tooltips to show model region names
+    update_tooltips()
+
+    # Update transmission lines if enabled
+    update_transmission_lines()
+
 
 def update_map_cluster_colors(region_aggregations):
     """Update map to show cluster assignments with group outline colors preserved."""
-    # Build BA -> cluster mapping
-    ba_to_cluster = {}
-    cluster_names = list(region_aggregations.keys())
+    # Build BA -> cluster color mapping and BA -> region name mapping
+    state.cluster_colors = {}
+    state.ba_to_region = {}
+    state.is_clustered = True
 
     for i, (cluster_name, bas) in enumerate(region_aggregations.items()):
         color = CLUSTER_COLORS[i % len(CLUSTER_COLORS)]
         for ba in bas:
-            ba_to_cluster[ba] = color
+            state.cluster_colors[ba] = color
+            state.ba_to_region[ba] = cluster_name
 
     # Update layer styles - keep group outline color
     for ba_id, layer in state.ba_layers.items():
         if ba_id in state.selected_bas:
-            fill_color = ba_to_cluster.get(ba_id, "#999999")
+            fill_color = state.cluster_colors.get(ba_id, "#999999")
             outline_color = get_outline_color(ba_id)
             layer.setStyle(
                 to_js(
@@ -794,6 +977,167 @@ def update_map_cluster_colors(region_aggregations):
                     }
                 )
             )
+
+
+# ============================================================================
+# Transmission Lines Visualization
+# ============================================================================
+
+
+def get_line_weight(capacity_mw):
+    """Calculate line weight based on transmission capacity."""
+    # Scale: 1-8 pixels based on capacity
+    # Typical range is ~100 MW to ~15000 MW
+    min_weight = 1
+    max_weight = 8
+    min_cap = 100
+    max_cap = 12000
+
+    # Clamp and scale
+    clamped = max(min_cap, min(max_cap, capacity_mw))
+    normalized = (clamped - min_cap) / (max_cap - min_cap)
+    return min_weight + normalized * (max_weight - min_weight)
+
+
+def draw_ba_transmission_lines():
+    """Draw transmission lines between BA centroids."""
+    if state.transmission_df is None or not state.ba_centroids:
+        return
+
+    lines = []
+
+    # Only show lines for selected BAs (or all if none selected)
+    relevant_bas = state.selected_bas if state.selected_bas else state.all_bas
+
+    for _, row in state.transmission_df.iterrows():
+        ba_from = row["region_from"]
+        ba_to = row["region_to"]
+        capacity = row["firm_ttc_mw"]
+
+        # Only draw if both BAs are in the relevant set and have centroids
+        if ba_from in relevant_bas and ba_to in relevant_bas:
+            if ba_from in state.ba_centroids and ba_to in state.ba_centroids:
+                lat1, lng1 = state.ba_centroids[ba_from]
+                lat2, lng2 = state.ba_centroids[ba_to]
+
+                weight = get_line_weight(capacity)
+
+                # Create polyline
+                line = L.polyline(
+                    to_js([[lat1, lng1], [lat2, lng2]]),
+                    to_js(
+                        {
+                            "color": "#ff6600",
+                            "weight": weight,
+                            "opacity": 0.6,
+                            "pane": "transmissionPane",
+                        }
+                    ),
+                )
+                line.bindTooltip(f"{ba_from} ↔ {ba_to}<br>{capacity:,.0f} MW")
+                lines.append(line)
+
+    return lines
+
+
+def draw_region_transmission_lines(region_aggregations):
+    """Draw transmission lines showing capacity between model regions."""
+    if state.transmission_df is None or not state.ba_centroids:
+        return
+
+    # Build BA -> region mapping
+    ba_to_region = {}
+    for region_name, bas in region_aggregations.items():
+        for ba in bas:
+            ba_to_region[ba] = region_name
+
+    # Calculate region centroids (average of BA centroids)
+    region_centroids = {}
+    for region_name, bas in region_aggregations.items():
+        lats = []
+        lngs = []
+        for ba in bas:
+            if ba in state.ba_centroids:
+                lat, lng = state.ba_centroids[ba]
+                lats.append(lat)
+                lngs.append(lng)
+        if lats:
+            region_centroids[region_name] = (
+                sum(lats) / len(lats),
+                sum(lngs) / len(lngs),
+            )
+
+    # Aggregate transmission capacity between regions
+    region_capacity = {}  # (region1, region2) -> total capacity
+
+    for _, row in state.transmission_df.iterrows():
+        ba_from = row["region_from"]
+        ba_to = row["region_to"]
+        capacity = row["firm_ttc_mw"]
+
+        if ba_from in ba_to_region and ba_to in ba_to_region:
+            region_from = ba_to_region[ba_from]
+            region_to = ba_to_region[ba_to]
+
+            # Only count inter-region connections
+            if region_from != region_to:
+                # Use sorted tuple as key for bidirectional
+                key = tuple(sorted([region_from, region_to]))
+                region_capacity[key] = region_capacity.get(key, 0) + capacity
+
+    lines = []
+
+    for (region1, region2), capacity in region_capacity.items():
+        if region1 in region_centroids and region2 in region_centroids:
+            lat1, lng1 = region_centroids[region1]
+            lat2, lng2 = region_centroids[region2]
+
+            weight = get_line_weight(capacity)
+
+            line = L.polyline(
+                to_js([[lat1, lng1], [lat2, lng2]]),
+                to_js(
+                    {
+                        "color": "#cc0000",
+                        "weight": weight,
+                        "opacity": 0.8,
+                        "pane": "transmissionPane",
+                    }
+                ),
+            )
+            line.bindTooltip(f"{region1} ↔ {region2}<br>{capacity:,.0f} MW")
+            lines.append(line)
+
+    return lines
+
+
+def update_transmission_lines():
+    """Update transmission lines based on current state."""
+    # Remove existing layer if present
+    if state.transmission_lines_layer is not None:
+        state.map.removeLayer(state.transmission_lines_layer)
+        state.transmission_lines_layer = None
+
+    if not state.show_transmission_lines:
+        return
+
+    # Decide which type of lines to draw
+    if state.is_clustered and state.region_aggregations:
+        lines = draw_region_transmission_lines(state.region_aggregations)
+    else:
+        lines = draw_ba_transmission_lines()
+
+    if lines:
+        # Create layer group and add to map
+        state.transmission_lines_layer = L.layerGroup(to_js(lines))
+        state.transmission_lines_layer.addTo(state.map)
+
+
+def on_toggle_transmission_lines(event):
+    """Handle toggle of transmission lines checkbox."""
+    checkbox = document.getElementById("showTransmissionLines")
+    state.show_transmission_lines = checkbox.checked
+    update_transmission_lines()
 
 
 def on_select_all(event):
@@ -817,6 +1161,12 @@ def on_select_all(event):
 
 def on_clear_selection(event):
     """Clear all selections."""
+    # Reset cluster state
+    state.cluster_colors = {}
+    state.ba_to_region = {}
+    state.is_clustered = False
+    state.region_aggregations = None
+
     for ba_id, layer in state.ba_layers.items():
         if ba_id in state.selected_bas:
             outline_color = get_outline_color(ba_id)
@@ -833,6 +1183,12 @@ def on_clear_selection(event):
             )
     state.selected_bas.clear()
     update_selected_display()
+
+    # Update tooltips to remove region names
+    update_tooltips()
+
+    # Update transmission lines (will show BA lines if toggle is on)
+    update_transmission_lines()
 
 
 # ============================================================================
@@ -1055,16 +1411,23 @@ async def main():
         document.getElementById("boxModeBtn").addEventListener(
             "click", create_proxy(on_box_mode)
         )
+        document.getElementById("showTransmissionLines").addEventListener(
+            "change", create_proxy(on_toggle_transmission_lines)
+        )
 
         # Map events for box selection
         state.map.on("mousedown", create_proxy(on_map_mousedown))
         state.map.on("mousemove", create_proxy(on_map_mousemove))
         state.map.on("mouseup", create_proxy(on_map_mouseup))
 
+        # Start in box select mode (disable map dragging)
+        state.map.dragging.disable()
+        document.getElementById("map").classList.add("box-select-mode")
+
         # Done loading
         hide_loading()
         set_status(
-            "Ready! Click BAs on the map to select them, or use Box Select mode to drag-select multiple.",
+            "Ready! Drag on the map to select BAs, or switch to Click mode for individual selection.",
             "info",
         )
 

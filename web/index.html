@@ -385,8 +385,9 @@
                         <li><strong>Export:</strong> Copy or download the YAML output to use in PowerGenome.</li>
                     </ol>
                     <div class="tip">
-                        💡 <strong>Tip:</strong> The clustering uses transmission capacity between BAs to group
-                        connected regions together.
+                        💡 <strong>Tip:</strong> The clustering uses transmission capacity between BAs to create
+                        aggregated regions. BAs are first clustered within their selected grouping (e.g., NERC region),
+                        then groups are merged to reach the target number of regions.
                     </div>
                 </div>
             </div>
@@ -434,11 +435,22 @@
             <div class="section">
                 <label>Selection Mode</label>
                 <div class="selection-mode">
-                    <button class="mode-btn active" id="clickModeBtn" title="Click individual BAs">🖱️ Click</button>
-                    <button class="mode-btn" id="boxModeBtn" title="Drag to select multiple BAs">⬜ Box Select</button>
+                    <button class="mode-btn" id="clickModeBtn" title="Click individual BAs">🖱️ Click</button>
+                    <button class="mode-btn active" id="boxModeBtn" title="Drag to select multiple BAs">⬜ Box
+                        Select</button>
                 </div>
                 <div style="font-size: 11px; color: #666; margin-bottom: 8px;" id="selectionHint">
-                    Click on BAs to toggle selection
+                    Drag on the map to select multiple BAs
+                </div>
+            </div>
+
+            <div class="section">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="showTransmissionLines" style="width: auto; margin: 0;">
+                    Show Transmission Lines
+                </label>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                    Line thickness indicates capacity
                 </div>
             </div>
 
