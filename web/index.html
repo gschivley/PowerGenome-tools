@@ -621,6 +621,54 @@
             </div>
 
             <div id="plantTab" class="tab-content">
+                <div class="instructions">
+                    <div class="instructions-header" onclick="togglePlantInstructions()">
+                        <span>📖 How to Use</span>
+                        <span class="instructions-toggle" id="plantInstructionsToggle">▼ Hide</span>
+                    </div>
+                    <div class="instructions-content" id="plantInstructionsContent">
+                        <ol>
+                            <li><strong>Select technologies to omit:</strong> Choose which technology types to exclude
+                                from clustering (e.g., "All Other", "Solar thermal", "Flywheel" are pre-selected).</li>
+                            <li><strong>Group similar technologies:</strong> Check "Group similar technologies" to
+                                automatically group related tech types (Biomass and Other peaker by default). Uncheck to
+                                treat each technology individually.</li>
+                            <li><strong>Customize groups (optional):</strong> Add new groups and move technologies
+                                between "Available" and "In selected group" lists to create custom groupings.</li>
+                            <li><strong>Set cluster budget:</strong> Specify the total number of clusters across all
+                                technologies and regions. The default is automatically set to 15% above the minimum
+                                required (one cluster per tech/region combination).</li>
+                            <li><strong>Adjust thresholds (optional):</strong> Modify <em>Capacity Threshold</em> (MW)
+                                and <em>Heat-rate IQR Threshold</em> to control when generators are suggested for
+                                splitting.</li>
+                            <li><strong>Run clustering:</strong> Click <em>Run Plant Clustering</em> to generate cluster
+                                assignments.</li>
+                            <li><strong>Review suggestions:</strong> Check the "Top candidates for more splits" list to
+                                identify tech/region groups that could benefit from more clusters within the current
+                                budget.</li>
+                            <li><strong>Export:</strong> Copy or download the YAML output to use in PowerGenome.</li>
+                        </ol>
+                        <div class="tip">
+                            💡 <strong>Tip:</strong> Plant clustering respects the model regions created in the Regions
+                            tab. If you haven't run region clustering yet, plants are grouped by their BA. The system
+                            uses heat rate variability and capacity to suggest clusters; larger, more varied generator
+                            fleets get more clusters when budget allows.
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function togglePlantInstructions() {
+                        const content = document.getElementById('plantInstructionsContent');
+                        const toggle = document.getElementById('plantInstructionsToggle');
+                        if (content.classList.contains('hidden')) {
+                            content.classList.remove('hidden');
+                            toggle.textContent = '▼ Hide';
+                        } else {
+                            content.classList.add('hidden');
+                            toggle.textContent = '▶ Show';
+                        }
+                    }
+                </script>
                 <div class="section">
                     <div style="font-size: 13px; color: #444;">
                         Cluster existing generators inside the current model regions. If you have not run region
