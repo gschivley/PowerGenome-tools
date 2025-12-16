@@ -260,76 +260,83 @@
 
         .mode-btn {
 
-        .tab-bar {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
+            .tab-bar {
+                display: flex;
+                gap: 6px;
+                margin-bottom: 12px;
+            }
 
-        .tab-btn {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-        }
+            .tab-btn {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background: white;
+                cursor: pointer;
+                font-weight: 600;
+                transition: background 0.2s, color 0.2s, border-color 0.2s;
+            }
 
-        .tab-btn.active {
-            background: #0066cc;
-            color: white;
-            border-color: #0066cc;
-        }
+            .tab-btn.active {
+                background: #0066cc;
+                color: white;
+                border-color: #0066cc;
+            }
 
-        .tab-content {
-            display: none;
-        }
+            .tab-content {
+                display: none;
+            }
 
-        .tab-content.active {
-            display: block;
-        }
+            .tab-content.active {
+                display: block;
+            }
 
-        .candidate-item {
-            padding: 6px 8px;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            background: #fff;
-            font-size: 12px;
-        }
-        .group-editor {
-            margin-top: 8px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 10px;
-            background: #fff;
-        }
-        .dual-list {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 8px;
-            align-items: center;
-        }
-        .dual-list select {
-            height: 180px;
-            width: 100%;
-        }
-        .dual-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .small-btn {
-            padding: 6px 10px;
-            font-size: 12px;
-        }
-        .group-empty {
-            font-size: 12px;
-            color: #666;
-            margin-top: 6px;
-        }
+            .candidate-item {
+                padding: 6px 8px;
+                border: 1px solid #eee;
+                border-radius: 4px;
+                margin-bottom: 6px;
+                background: #fff;
+                font-size: 12px;
+            }
+
+            .group-editor {
+                margin-top: 8px;
+                border: 1px solid #e0e0e0;
+                border-radius: 6px;
+                padding: 10px;
+                background: #fff;
+            }
+
+            .dual-list {
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .dual-list select {
+                height: 180px;
+                width: 100%;
+            }
+
+            .dual-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .small-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .group-empty {
+                font-size: 12px;
+                color: #666;
+                margin-top: 6px;
+            }
+
             flex: 1;
             padding: 6px 8px;
             border: 1px solid #ccc;
@@ -456,10 +463,13 @@
                                     Select</strong> mode to drag and select multiple BAs at once.</li>
                             <li><strong>Choose grouping:</strong> The <em>Grouping Column</em> determines how BAs are
                                 grouped for clustering (colored outlines show groups).</li>
-                            <li><strong>Set target regions:</strong> Enter how many final regions you want after clustering.
-                                Optionally enable <em>Auto-optimize</em> to find the best number of regions within a range.
+                            <li><strong>Set target regions:</strong> Enter how many final regions you want after
+                                clustering.
+                                Optionally enable <em>Auto-optimize</em> to find the best number of regions within a
+                                range.
                             </li>
-                            <li><strong>Exclude groups:</strong> Check any groups in <em>Groups to Keep Unclustered</em> to
+                            <li><strong>Exclude groups:</strong> Check any groups in <em>Groups to Keep Unclustered</em>
+                                to
                                 keep them as individual BAs.</li>
                             <li><strong>Run clustering:</strong> Click <em>Run Clustering</em> to generate the region
                                 aggregations.</li>
@@ -467,9 +477,12 @@
                         </ol>
                         <div class="tip">
                             💡 <strong>Tip:</strong> The clustering uses transmission capacity between BAs to create
-                            aggregated regions. BAs are first clustered within their selected grouping (e.g., NERC region),
-                            then groups are merged to reach the target number of regions. The selected grouping affects the
-                            clustering results, so experiment with different options to see what works best for your case!
+                            aggregated regions. BAs are first clustered within their selected grouping (e.g., NERC
+                            region),
+                            then groups are merged to reach the target number of regions. The selected grouping affects
+                            the
+                            clustering results, so experiment with different options to see what works best for your
+                            case!
                         </div>
                     </div>
                 </div>
@@ -624,7 +637,8 @@
                     </div>
                     <div class="group-editor">
                         <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                            <input id="newGroupName" type="text" placeholder="New group name" style="flex: 1; padding: 6px;">
+                            <input id="newGroupName" type="text" placeholder="New group name"
+                                style="flex: 1; padding: 6px;">
                             <button class="btn btn-secondary" id="addGroupBtn" type="button">Add Group</button>
                             <button class="btn btn-secondary" id="resetGroupsBtn" type="button">Reset Defaults</button>
                             <button class="btn btn-secondary" id="clearGroupsBtn" type="button">Clear Groups</button>
@@ -633,15 +647,18 @@
                             <label style="font-size: 12px;">Select group:</label>
                             <select id="groupSelectDual" style="flex: 1; padding: 6px;"></select>
                         </div>
-                        <div id="groupEmptyNotice" class="group-empty" style="display:none;">Add a group to begin assigning technologies.</div>
+                        <div id="groupEmptyNotice" class="group-empty" style="display:none;">Add a group to begin
+                            assigning technologies.</div>
                         <div class="dual-list">
                             <div>
                                 <div style="font-size: 12px; margin-bottom: 4px;">Available technologies</div>
                                 <select id="availableList" multiple></select>
                             </div>
                             <div class="dual-buttons">
-                                <button class="btn btn-secondary small-btn" id="moveToGroupBtn" type="button">&gt;&gt;</button>
-                                <button class="btn btn-secondary small-btn" id="moveToAvailableBtn" type="button">&lt;&lt;</button>
+                                <button class="btn btn-secondary small-btn" id="moveToGroupBtn"
+                                    type="button">&gt;&gt;</button>
+                                <button class="btn btn-secondary small-btn" id="moveToAvailableBtn"
+                                    type="button">&lt;&lt;</button>
                             </div>
                             <div>
                                 <div style="font-size: 12px; margin-bottom: 4px;">In selected group</div>
@@ -664,7 +681,8 @@
                 <div class="section">
                     <label>Total Cluster Budget</label>
                     <input id="plantBudget" type="number" value="200" min="1" />
-                    <div id="plantBudgetInfo" style="font-size: 11px; color: #666; margin-top: 4px;">Hard cap across all tech/region combinations. Minimum and default will update after data loads.</div>
+                    <div id="plantBudgetInfo" style="font-size: 11px; color: #666; margin-top: 4px;">Hard cap across all
+                        tech/region combinations. Minimum and default will update after data loads.</div>
                 </div>
                 <div class="section">
                     <label>Capacity Threshold (MW)</label>
@@ -684,7 +702,8 @@
                 </div>
                 <div class="section">
                     <label>Plant YAML</label>
-                    <textarea id="plantYamlOut" readonly placeholder="Run plant clustering to generate YAML..."></textarea>
+                    <textarea id="plantYamlOut" readonly
+                        placeholder="Run plant clustering to generate YAML..."></textarea>
                 </div>
                 <div class="section">
                     <label>Top candidates for more splits</label>

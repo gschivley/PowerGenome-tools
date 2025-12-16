@@ -1294,7 +1294,9 @@ def normalize_technology(tech_name, omit_tokens=None):
     name = tech_name.lower()
 
     default_omit = ["solar thermal", "all other", "flywheel"]
-    tokens = [t.lower() for t in (omit_tokens if omit_tokens is not None else default_omit)]
+    tokens = [
+        t.lower() for t in (omit_tokens if omit_tokens is not None else default_omit)
+    ]
 
     if any(token in name for token in tokens):
         return None
@@ -2276,9 +2278,7 @@ def update_default_cluster_budget(event=None):
         budget_input.value = str(default_clusters)
 
     if helper_text:
-        helper_text.textContent = (
-            f"Minimum clusters: {min_clusters}. Default set to {default_clusters} (+15%)."
-        )
+        helper_text.textContent = f"Minimum clusters: {min_clusters}. Default set to {default_clusters} (+15%)."
 
 
 def ensure_current_group():
@@ -2495,9 +2495,7 @@ def on_run_plant_clustering(event):
 
     result_el = document.getElementById("plantResultText")
     if result_el:
-        result_el.textContent = (
-            f"Plant clustering ready: {total_clusters} clusters across technologies{note}."
-        )
+        result_el.textContent = f"Plant clustering ready: {total_clusters} clusters across technologies{note}."
         result_el.className = "status success"
 
     set_status(
