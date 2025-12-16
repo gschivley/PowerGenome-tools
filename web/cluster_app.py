@@ -610,7 +610,7 @@ def get_regional_groups(hierarchy_df, grouping_column, valid_bas):
 
 
 def spectral_cluster(graph, n_clusters):
-    """Perform spectral clustering."""
+    """Perform spectral clustering on a graph."""
     nodes = sorted(graph.nodes())
     n = len(nodes)
 
@@ -686,6 +686,122 @@ def spectral_cluster(graph, n_clusters):
         clusters[label].add(nodes[idx])
 
     return clusters
+
+
+def hierarchical_cluster(hierarchy_df, transmission_df, cluster_bas, grouping_column, target_regions):
+    """
+    Hierarchical clustering that respects grouping column boundaries.
+    
+    Phase 1: Cluster BAs within each grouping column region
+    Phase 2: Merge entire grouping column regions together if needed
+    
+    Grouping column regions are never split across model regions.
+    """
+    # Group BAs by their grouping column value
+    groups = {}
+    for _, row in hierarchy_df[hierarchy_df["ba"].isin(cluster_bas)].iterrows():
+        ba = row["ba"]
+        group = row[grouping_column]
+        if group not in groups:
+            groups[group] = set()
+        groups[group].add(ba)
+    
+    num_groups = len(groups)
+    
+    # If target is >= number of groups, cluster within each group
+    if target_regions >= num_groups:
+        # Distribute target across groups proportionally
+        # Each group gets at least 1 region
+        regions_per_group = {}
+        remaining_regions = target_regions
+        
+        # First pass: give each group 1 region
+        for group in groups:
+            regions_per_group[group] = 1
+            remaining_regions -= 1
+        
+        # Second pass: distribute remaining regions by group size
+        if remaining_regions > 0:
+            group_sizes = [(group, len(bas)) for group, bas in groups.items()]
+            group_sizes.sort(key=lambda x: -x[1])  # Largest first
+            
+            for group, size in group_sizes:
+                if remaining_regions <= 0:
+                    break
+                # Give more regions to larger groups
+                max_additional = min(remaining_regions, size - 1)  # Can't have more regions than BAs
+                regions_per_group[group] += max_additional
+                remaining_regions -= max_additional
+        
+        # Cluster within each group
+        all_clusters = {}
+        cluster_id = 0
+        
+        for group, group_bas in groups.items():
+            n_clusters_for_group = min(regions_per_group[group], len(group_bas))
+            
+            if n_clusters_for_group == 1 or len(group_bas) == 1:
+                # Entire group becomes one cluster
+                all_clusters[cluster_id] = group_bas
+                cluster_id += 1
+            else:
+                # Build subgraph for this group
+                subgraph = build_transmission_graph(transmission_df, group_bas)
+                sub_clusters = spectral_cluster(subgraph, n_clusters_for_group)
+                
+                for label, nodes in sub_clusters.items():
+                    all_clusters[cluster_id] = nodes
+                    cluster_id += 1
+        
+        return all_clusters
+    
+    else:
+        # target_regions < num_groups: need to merge entire groups
+        # Phase 1: Each group becomes a single unit
+        # Phase 2: Merge groups based on inter-group transmission capacity
+        
+        # Build a graph where nodes are groups and edges are total transmission between groups
+        group_graph = nx.Graph()
+        for group in groups:
+            group_graph.add_node(group)
+        
+        # Calculate inter-group transmission capacity
+        for _, row in transmission_df.iterrows():
+            ba_from = row["region_from"]
+            ba_to = row["region_to"]
+            capacity = row["firm_ttc_mw"]
+            
+            # Find which groups these BAs belong to
+            group_from = None
+            group_to = None
+            for group, bas in groups.items():
+                if ba_from in bas:
+                    group_from = group
+                if ba_to in bas:
+                    group_to = group
+            
+            if group_from and group_to and group_from != group_to:
+                if group_graph.has_edge(group_from, group_to):
+                    group_graph[group_from][group_to]["weight"] += capacity
+                else:
+                    group_graph.add_edge(group_from, group_to, weight=capacity)
+        
+        # Cluster groups
+        group_clusters = spectral_cluster(group_graph, target_regions)
+        
+        # Convert group clusters to BA clusters
+        all_clusters = {}
+        cluster_id = 0
+        
+        for label, group_set in group_clusters.items():
+            # Combine all BAs from all groups in this cluster
+            combined_bas = set()
+            for group in group_set:
+                combined_bas.update(groups[group])
+            all_clusters[cluster_id] = combined_bas
+            cluster_id += 1
+        
+        return all_clusters
 
 
 def generate_cluster_names(clusters, groups):
@@ -827,8 +943,10 @@ def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_gro
         actual_target = max(1, target_regions - len(unclustered_bas))
         actual_target = min(actual_target, len(cluster_bas))
 
-        # Run spectral clustering
-        clusters = spectral_cluster(graph, actual_target)
+        # Run hierarchical clustering that respects grouping column boundaries
+        clusters = hierarchical_cluster(
+            hierarchy, state.transmission_df, cluster_bas, grouping_column, actual_target
+        )
 
         # Generate names
         cluster_names = generate_cluster_names(clusters, groups)
