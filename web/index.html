@@ -289,6 +289,69 @@
             pointer-events: none;
             z-index: 1000;
         }
+
+        /* Instructions panel */
+        .instructions {
+            background: #fff8e1;
+            border: 1px solid #ffcc02;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .instructions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            cursor: pointer;
+            background: #fff3c4;
+            font-weight: 500;
+        }
+
+        .instructions-header:hover {
+            background: #ffecb3;
+        }
+
+        .instructions-toggle {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .instructions-content {
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            border-top: 1px solid #ffe082;
+        }
+
+        .instructions-content.hidden {
+            display: none;
+        }
+
+        .instructions-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .instructions-content li {
+            margin-bottom: 6px;
+        }
+
+        .instructions-content code {
+            background: #fff;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .instructions-content .tip {
+            background: #e3f2fd;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -301,6 +364,46 @@
     <div id="app">
         <div id="sidebar">
             <h2>🗺️ Region Clustering</h2>
+
+            <div class="instructions">
+                <div class="instructions-header" onclick="toggleInstructions()">
+                    <span>📖 How to Use</span>
+                    <span class="instructions-toggle" id="instructionsToggle">▼ Hide</span>
+                </div>
+                <div class="instructions-content" id="instructionsContent">
+                    <ol>
+                        <li><strong>Select BAs:</strong> Click on regions in the map to select them. Use <strong>Box
+                                Select</strong> mode to drag and select multiple BAs at once.</li>
+                        <li><strong>Choose grouping:</strong> The <em>Grouping Column</em> determines how BAs are
+                            grouped for clustering (colored outlines show groups).</li>
+                        <li><strong>Set target regions:</strong> Enter how many final regions you want after clustering.
+                        </li>
+                        <li><strong>Exclude groups:</strong> Check any groups in <em>Groups to Keep Unclustered</em> to
+                            keep them as individual BAs.</li>
+                        <li><strong>Run clustering:</strong> Click <em>Run Clustering</em> to generate the region
+                            aggregations.</li>
+                        <li><strong>Export:</strong> Copy or download the YAML output to use in PowerGenome.</li>
+                    </ol>
+                    <div class="tip">
+                        💡 <strong>Tip:</strong> The clustering uses transmission capacity between BAs to group
+                        connected regions together.
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function toggleInstructions() {
+                    const content = document.getElementById('instructionsContent');
+                    const toggle = document.getElementById('instructionsToggle');
+                    if (content.classList.contains('hidden')) {
+                        content.classList.remove('hidden');
+                        toggle.textContent = '▼ Hide';
+                    } else {
+                        content.classList.add('hidden');
+                        toggle.textContent = '▶ Show';
+                    }
+                }
+            </script>
 
             <div id="statusBox" class="status info">Click BAs on the map to select them for clustering.</div>
 

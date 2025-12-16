@@ -47,7 +47,8 @@ class AppState:
         self.ba_centroids = {}  # ba_id -> (lat, lng) for box selection
         self.box_select_mode = False
         self.box_start = None
-        self.group_colors = {}  # group_value -> color
+        self.group_colors = {}  # group_value -> outline color
+        self.group_fill_colors = {}  # group_value -> light fill color
         self.ba_to_group = {}  # ba_id -> group_value
         self.current_grouping = None  # current grouping column
 
@@ -84,6 +85,14 @@ def get_outline_color(ba_id):
     if group and group in state.group_colors:
         return state.group_colors[group]
     return "#666666"  # default gray
+
+
+def get_fill_color(ba_id):
+    """Get the fill color for an unselected BA based on its group (lighter version)."""
+    group = state.ba_to_group.get(ba_id)
+    if group and group in state.group_fill_colors:
+        return state.group_fill_colors[group]
+    return "#cccccc"  # default gray
 
 
 # Cluster colors for visualization (fill colors after clustering)
@@ -186,14 +195,15 @@ def update_selected_display():
 def toggle_ba_selection(ba_id, layer):
     """Toggle selection state of a BA."""
     outline_color = get_outline_color(ba_id)
+    fill_color = get_fill_color(ba_id)
 
     if ba_id in state.selected_bas:
         state.selected_bas.remove(ba_id)
         layer.setStyle(
             to_js(
                 {
-                    "fillColor": "#cccccc",
-                    "fillOpacity": 0.4,
+                    "fillColor": fill_color,
+                    "fillOpacity": 0.5,
                     "color": outline_color,
                     "weight": 2,
                 }
@@ -250,11 +260,12 @@ def on_feature_mouseout(e):
             )
         )
     else:
+        fill_color = get_fill_color(ba_id)
         layer.setStyle(
             to_js(
                 {
-                    "fillColor": "#cccccc",
-                    "fillOpacity": 0.4,
+                    "fillColor": fill_color,
+                    "fillOpacity": 0.5,
                     "color": outline_color,
                     "weight": 2,
                 }
@@ -370,6 +381,27 @@ async def load_data():
     state.transmission_df = pd.read_csv(StringIO(transmission_text))
 
 
+def hex_to_rgb(hex_color):
+    """Convert hex color to RGB tuple."""
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+
+
+def rgb_to_hex(rgb):
+    """Convert RGB tuple to hex color."""
+    return "#{:02x}{:02x}{:02x}".format(int(rgb[0]), int(rgb[1]), int(rgb[2]))
+
+
+def lighten_color(hex_color, factor=0.7):
+    """Create a lighter version of a color by mixing with white."""
+    r, g, b = hex_to_rgb(hex_color)
+    # Mix with white (255, 255, 255)
+    r = r + (255 - r) * factor
+    g = g + (255 - g) * factor
+    b = b + (255 - b) * factor
+    return rgb_to_hex((r, g, b))
+
+
 def update_group_colors():
     """Update group colors based on current grouping column and apply to map."""
     grouping_col = document.getElementById("groupingColumn").value
@@ -386,8 +418,12 @@ def update_group_colors():
     # Get unique groups and assign colors
     unique_groups = sorted(state.hierarchy_df[grouping_col].unique())
     state.group_colors = {}
+    state.group_fill_colors = {}
     for i, group in enumerate(unique_groups):
-        state.group_colors[group] = GROUP_OUTLINE_COLORS[i % len(GROUP_OUTLINE_COLORS)]
+        outline_color = GROUP_OUTLINE_COLORS[i % len(GROUP_OUTLINE_COLORS)]
+        state.group_colors[group] = outline_color
+        # Create a light fill color (70% toward white)
+        state.group_fill_colors[group] = lighten_color(outline_color, 0.75)
 
     # Build BA to group mapping
     state.ba_to_group = {}
@@ -400,9 +436,10 @@ def update_group_colors():
 
 
 def apply_group_colors_to_map():
-    """Apply group outline colors to all BA layers on the map."""
+    """Apply group outline and fill colors to all BA layers on the map."""
     for ba_id, layer in state.ba_layers.items():
         outline_color = get_outline_color(ba_id)
+        fill_color = get_fill_color(ba_id)
 
         if ba_id in state.selected_bas:
             layer.setStyle(
@@ -419,8 +456,8 @@ def apply_group_colors_to_map():
             layer.setStyle(
                 to_js(
                     {
-                        "fillColor": "#cccccc",
-                        "fillOpacity": 0.4,
+                        "fillColor": fill_color,
+                        "fillOpacity": 0.5,
                         "color": outline_color,
                         "weight": 2,
                     }
@@ -783,11 +820,12 @@ def on_clear_selection(event):
     for ba_id, layer in state.ba_layers.items():
         if ba_id in state.selected_bas:
             outline_color = get_outline_color(ba_id)
+            fill_color = get_fill_color(ba_id)
             layer.setStyle(
                 to_js(
                     {
-                        "fillColor": "#cccccc",
-                        "fillOpacity": 0.4,
+                        "fillColor": fill_color,
+                        "fillOpacity": 0.5,
                         "color": outline_color,
                         "weight": 2,
                     }
