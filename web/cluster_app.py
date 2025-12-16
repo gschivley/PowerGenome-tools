@@ -4,7 +4,7 @@ PowerGenome Region Clustering - PyScript Web App
 This module runs in the browser via PyScript and handles:
 1. Loading and displaying the BA map
 2. Managing BA selection state
-3. Running spectral clustering
+3. Running clustering algorithms (agglomerative and Louvain)
 4. Generating YAML output
 """
 
@@ -26,9 +26,6 @@ import numpy as np
 # Will be imported after PyScript loads packages
 import pandas as pd
 import yaml
-from scipy.cluster.hierarchy import fcluster, linkage
-from scipy.spatial.distance import squareform
-from sklearn.cluster import SpectralClustering
 
 # ============================================================================
 # Global State
@@ -609,83 +606,109 @@ def get_regional_groups(hierarchy_df, grouping_column, valid_bas):
     return groups
 
 
-def spectral_cluster(graph, n_clusters):
-    """Perform spectral clustering on a graph."""
-    nodes = sorted(graph.nodes())
+def agglomerative_cluster(graph, n_clusters):
+    """
+    Perform agglomerative clustering on a graph.
+
+    Uses a greedy approach: repeatedly merge the two clusters with the
+    highest total edge weight between them until reaching n_clusters.
+
+    This replaces spectral clustering and requires only NetworkX/NumPy.
+    """
+    nodes = list(graph.nodes())
     n = len(nodes)
 
     if n <= n_clusters:
         # Each node is its own cluster
         return {i: {node} for i, node in enumerate(nodes)}
 
-    # Build adjacency matrix
-    A = nx.to_numpy_array(graph, nodelist=nodes, weight="weight")
+    # Initialize: each node is its own cluster
+    # Use a dict mapping cluster_id -> set of nodes
+    clusters = {i: {node} for i, node in enumerate(nodes)}
+    node_to_cluster = {node: i for i, node in enumerate(nodes)}
 
-    # Check for isolated nodes
-    degrees = A.sum(axis=1)
-    isolated_mask = degrees == 0
+    # Build initial inter-cluster weights
+    # cluster_weights[(c1, c2)] = total weight between clusters c1 and c2
+    cluster_weights = {}
+    for u, v, data in graph.edges(data=True):
+        c1, c2 = node_to_cluster[u], node_to_cluster[v]
+        if c1 != c2:
+            key = (min(c1, c2), max(c1, c2))
+            weight = data.get("weight", 1.0)
+            cluster_weights[key] = cluster_weights.get(key, 0) + weight
 
-    if np.all(isolated_mask):
-        # All nodes isolated - assign to individual clusters
-        return {i: {node} for i, node in enumerate(nodes)}
+    # Merge until we reach target number of clusters
+    while len(clusters) > n_clusters:
+        if not cluster_weights:
+            # No more edges to merge on - remaining clusters are disconnected
+            # Just keep them as separate clusters
+            break
 
-    if np.any(isolated_mask):
-        # Handle isolated nodes separately
-        connected_indices = np.where(~isolated_mask)[0]
-        isolated_indices = np.where(isolated_mask)[0]
+        # Find the pair with maximum weight
+        best_pair = max(cluster_weights.keys(), key=lambda k: cluster_weights[k])
+        c1, c2 = best_pair
 
-        connected_nodes = [nodes[i] for i in connected_indices]
-        isolated_nodes = [nodes[i] for i in isolated_indices]
+        # Merge c2 into c1
+        clusters[c1].update(clusters[c2])
+        for node in clusters[c2]:
+            node_to_cluster[node] = c1
+        del clusters[c2]
 
-        if len(connected_nodes) <= n_clusters - len(isolated_nodes):
-            # Give each connected node its own cluster plus isolated
-            clusters = {i: {node} for i, node in enumerate(connected_nodes)}
-            for i, node in enumerate(isolated_nodes):
-                clusters[len(connected_nodes) + i] = {node}
-            return clusters
+        # Update cluster weights
+        # Remove all edges involving c2, add them to c1
+        new_weights = {}
+        keys_to_remove = []
 
-        # Cluster connected nodes
-        A_connected = A[np.ix_(connected_indices, connected_indices)]
-        n_clusters_connected = max(1, n_clusters - len(isolated_nodes))
+        for (ca, cb), weight in cluster_weights.items():
+            if ca == c2 or cb == c2:
+                keys_to_remove.append((ca, cb))
+                # Redirect to c1
+                other = cb if ca == c2 else ca
+                if other != c1:
+                    new_key = (min(c1, other), max(c1, other))
+                    new_weights[new_key] = new_weights.get(new_key, 0) + weight
 
-        sc = SpectralClustering(
-            n_clusters=n_clusters_connected,
-            affinity="precomputed",
-            assign_labels="kmeans",
-            random_state=42,
+        for key in keys_to_remove:
+            del cluster_weights[key]
+
+        for key, weight in new_weights.items():
+            cluster_weights[key] = cluster_weights.get(key, 0) + weight
+
+    # Renumber clusters to be sequential
+    result = {}
+    for i, (cluster_id, nodes_set) in enumerate(clusters.items()):
+        result[i] = nodes_set
+
+    return result
+
+
+def louvain_cluster(graph):
+    """
+    Perform Louvain community detection on a graph.
+
+    Returns communities that maximize modularity.
+    The number of clusters is determined automatically.
+
+    This is used for auto-optimize mode.
+    """
+    if graph.number_of_nodes() == 0:
+        return {}
+
+    if graph.number_of_edges() == 0:
+        # No edges - each node is its own community
+        return {i: {node} for i, node in enumerate(graph.nodes())}
+
+    try:
+        # Use NetworkX's Louvain implementation
+        communities = nx.community.louvain_communities(
+            graph, weight="weight", resolution=1.0, seed=42
         )
-        labels = sc.fit_predict(A_connected)
 
-        clusters = {}
-        for idx, label in enumerate(labels):
-            if label not in clusters:
-                clusters[label] = set()
-            clusters[label].add(connected_nodes[idx])
-
-        # Add isolated nodes as individual clusters
-        next_label = max(clusters.keys()) + 1 if clusters else 0
-        for node in isolated_nodes:
-            clusters[next_label] = {node}
-            next_label += 1
-
-        return clusters
-
-    # All nodes connected
-    sc = SpectralClustering(
-        n_clusters=n_clusters,
-        affinity="precomputed",
-        assign_labels="kmeans",
-        random_state=42,
-    )
-    labels = sc.fit_predict(A)
-
-    clusters = {}
-    for idx, label in enumerate(labels):
-        if label not in clusters:
-            clusters[label] = set()
-        clusters[label].add(nodes[idx])
-
-    return clusters
+        # Convert to our format: dict of label -> set of nodes
+        return {i: set(community) for i, community in enumerate(communities)}
+    except Exception:
+        # Fallback: each node is its own cluster
+        return {i: {node} for i, node in enumerate(graph.nodes())}
 
 
 def hierarchical_cluster(
@@ -751,7 +774,7 @@ def hierarchical_cluster(
             else:
                 # Build subgraph for this group
                 subgraph = build_transmission_graph(transmission_df, group_bas)
-                sub_clusters = spectral_cluster(subgraph, n_clusters_for_group)
+                sub_clusters = agglomerative_cluster(subgraph, n_clusters_for_group)
 
                 for label, nodes in sub_clusters.items():
                     all_clusters[cluster_id] = nodes
@@ -790,8 +813,8 @@ def hierarchical_cluster(
                 else:
                     group_graph.add_edge(group_from, group_to, weight=capacity)
 
-        # Cluster groups
-        group_clusters = spectral_cluster(group_graph, target_regions)
+        # Cluster groups using agglomerative clustering
+        group_clusters = agglomerative_cluster(group_graph, target_regions)
 
         # Convert group clusters to BA clusters
         all_clusters = {}
@@ -847,32 +870,97 @@ def find_optimal_clusters(
     max_regions,
 ):
     """
-    Find the optimal number of clusters by maximizing modularity.
+    Find the optimal clustering using Louvain community detection.
+
+    Uses Louvain algorithm which directly maximizes modularity.
+    The min_regions and max_regions are used to constrain the result:
+    - If Louvain finds fewer clusters than min_regions, we don't split further
+    - If Louvain finds more clusters than max_regions, we merge using agglomerative
 
     Returns (best_clusters, best_n, best_modularity, all_scores)
     """
-    # Build graph for modularity calculation
+    # Group BAs by their grouping column value
+    groups = {}
+    for _, row in hierarchy_df[hierarchy_df["ba"].isin(cluster_bas)].iterrows():
+        ba = row["ba"]
+        group = row[grouping_column]
+        if group not in groups:
+            groups[group] = set()
+        groups[group].add(ba)
+
+    # Build graph for the cluster BAs
     graph = build_transmission_graph(transmission_df, cluster_bas)
 
-    best_clusters = None
-    best_n = min_regions
-    best_modularity = -1.0
-    all_scores = {}
+    # Use Louvain on within-group subgraphs, respecting grouping boundaries
+    all_clusters = {}
+    cluster_id = 0
 
-    for n in range(min_regions, max_regions + 1):
-        clusters = hierarchical_cluster(
-            hierarchy_df, transmission_df, cluster_bas, grouping_column, n
-        )
+    for group, group_bas in groups.items():
+        if len(group_bas) == 1:
+            all_clusters[cluster_id] = group_bas
+            cluster_id += 1
+        else:
+            # Build subgraph for this group
+            subgraph = build_transmission_graph(transmission_df, group_bas)
+            # Use Louvain to find natural communities within this group
+            sub_clusters = louvain_cluster(subgraph)
 
-        modularity = calculate_modularity(graph, clusters)
-        all_scores[n] = modularity
+            for label, nodes in sub_clusters.items():
+                all_clusters[cluster_id] = nodes
+                cluster_id += 1
 
-        if modularity > best_modularity:
-            best_modularity = modularity
-            best_n = n
-            best_clusters = clusters
+    num_clusters = len(all_clusters)
 
-    return best_clusters, best_n, best_modularity, all_scores
+    # If we have more clusters than max_regions, merge using agglomerative
+    if num_clusters > max_regions:
+        # Build a graph of the current clusters
+        cluster_graph = nx.Graph()
+        for cid in all_clusters:
+            cluster_graph.add_node(cid)
+
+        # Add edges based on transmission between clusters
+        for _, row in transmission_df.iterrows():
+            ba_from = row["region_from"]
+            ba_to = row["region_to"]
+            capacity = row["firm_ttc_mw"]
+
+            # Find which clusters these BAs belong to
+            cluster_from = None
+            cluster_to = None
+            for cid, bas in all_clusters.items():
+                if ba_from in bas:
+                    cluster_from = cid
+                if ba_to in bas:
+                    cluster_to = cid
+
+            if (
+                cluster_from is not None
+                and cluster_to is not None
+                and cluster_from != cluster_to
+            ):
+                if cluster_graph.has_edge(cluster_from, cluster_to):
+                    cluster_graph[cluster_from][cluster_to]["weight"] += capacity
+                else:
+                    cluster_graph.add_edge(cluster_from, cluster_to, weight=capacity)
+
+        # Merge clusters down to max_regions
+        merged = agglomerative_cluster(cluster_graph, max_regions)
+
+        # Convert back to BA clusters
+        new_clusters = {}
+        for new_id, old_cluster_ids in merged.items():
+            combined_bas = set()
+            for old_id in old_cluster_ids:
+                combined_bas.update(all_clusters[old_id])
+            new_clusters[new_id] = combined_bas
+
+        all_clusters = new_clusters
+
+    # Calculate final modularity
+    modularity = calculate_modularity(graph, all_clusters)
+    num_clusters = len(all_clusters)
+
+    return all_clusters, num_clusters, modularity, {num_clusters: modularity}
 
 
 def generate_cluster_names(clusters, groups):
