@@ -688,13 +688,15 @@ def spectral_cluster(graph, n_clusters):
     return clusters
 
 
-def hierarchical_cluster(hierarchy_df, transmission_df, cluster_bas, grouping_column, target_regions):
+def hierarchical_cluster(
+    hierarchy_df, transmission_df, cluster_bas, grouping_column, target_regions
+):
     """
     Hierarchical clustering that respects grouping column boundaries.
-    
+
     Phase 1: Cluster BAs within each grouping column region
     Phase 2: Merge entire grouping column regions together if needed
-    
+
     Grouping column regions are never split across model regions.
     """
     # Group BAs by their grouping column value
@@ -705,41 +707,43 @@ def hierarchical_cluster(hierarchy_df, transmission_df, cluster_bas, grouping_co
         if group not in groups:
             groups[group] = set()
         groups[group].add(ba)
-    
+
     num_groups = len(groups)
-    
+
     # If target is >= number of groups, cluster within each group
     if target_regions >= num_groups:
         # Distribute target across groups proportionally
         # Each group gets at least 1 region
         regions_per_group = {}
         remaining_regions = target_regions
-        
+
         # First pass: give each group 1 region
         for group in groups:
             regions_per_group[group] = 1
             remaining_regions -= 1
-        
+
         # Second pass: distribute remaining regions by group size
         if remaining_regions > 0:
             group_sizes = [(group, len(bas)) for group, bas in groups.items()]
             group_sizes.sort(key=lambda x: -x[1])  # Largest first
-            
+
             for group, size in group_sizes:
                 if remaining_regions <= 0:
                     break
                 # Give more regions to larger groups
-                max_additional = min(remaining_regions, size - 1)  # Can't have more regions than BAs
+                max_additional = min(
+                    remaining_regions, size - 1
+                )  # Can't have more regions than BAs
                 regions_per_group[group] += max_additional
                 remaining_regions -= max_additional
-        
+
         # Cluster within each group
         all_clusters = {}
         cluster_id = 0
-        
+
         for group, group_bas in groups.items():
             n_clusters_for_group = min(regions_per_group[group], len(group_bas))
-            
+
             if n_clusters_for_group == 1 or len(group_bas) == 1:
                 # Entire group becomes one cluster
                 all_clusters[cluster_id] = group_bas
@@ -748,29 +752,29 @@ def hierarchical_cluster(hierarchy_df, transmission_df, cluster_bas, grouping_co
                 # Build subgraph for this group
                 subgraph = build_transmission_graph(transmission_df, group_bas)
                 sub_clusters = spectral_cluster(subgraph, n_clusters_for_group)
-                
+
                 for label, nodes in sub_clusters.items():
                     all_clusters[cluster_id] = nodes
                     cluster_id += 1
-        
+
         return all_clusters
-    
+
     else:
         # target_regions < num_groups: need to merge entire groups
         # Phase 1: Each group becomes a single unit
         # Phase 2: Merge groups based on inter-group transmission capacity
-        
+
         # Build a graph where nodes are groups and edges are total transmission between groups
         group_graph = nx.Graph()
         for group in groups:
             group_graph.add_node(group)
-        
+
         # Calculate inter-group transmission capacity
         for _, row in transmission_df.iterrows():
             ba_from = row["region_from"]
             ba_to = row["region_to"]
             capacity = row["firm_ttc_mw"]
-            
+
             # Find which groups these BAs belong to
             group_from = None
             group_to = None
@@ -779,20 +783,20 @@ def hierarchical_cluster(hierarchy_df, transmission_df, cluster_bas, grouping_co
                     group_from = group
                 if ba_to in bas:
                     group_to = group
-            
+
             if group_from and group_to and group_from != group_to:
                 if group_graph.has_edge(group_from, group_to):
                     group_graph[group_from][group_to]["weight"] += capacity
                 else:
                     group_graph.add_edge(group_from, group_to, weight=capacity)
-        
+
         # Cluster groups
         group_clusters = spectral_cluster(group_graph, target_regions)
-        
+
         # Convert group clusters to BA clusters
         all_clusters = {}
         cluster_id = 0
-        
+
         for label, group_set in group_clusters.items():
             # Combine all BAs from all groups in this cluster
             combined_bas = set()
@@ -800,8 +804,75 @@ def hierarchical_cluster(hierarchy_df, transmission_df, cluster_bas, grouping_co
                 combined_bas.update(groups[group])
             all_clusters[cluster_id] = combined_bas
             cluster_id += 1
-        
+
         return all_clusters
+
+
+def calculate_modularity(graph, clusters):
+    """
+    Calculate the modularity score for a clustering result.
+
+    Modularity measures how well a network is divided into communities.
+    Higher values (closer to 1) indicate better clustering.
+    Values typically range from -0.5 to 1.
+    """
+    if not clusters or graph.number_of_edges() == 0:
+        return 0.0
+
+    # Convert clusters dict to list of sets for networkx
+    communities = [clusters[label] for label in sorted(clusters.keys())]
+
+    # Filter to only include nodes that are in the graph
+    graph_nodes = set(graph.nodes())
+    communities = [c & graph_nodes for c in communities]
+    communities = [c for c in communities if len(c) > 0]
+
+    if not communities:
+        return 0.0
+
+    try:
+        # Use networkx modularity function
+        modularity = nx.community.modularity(graph, communities, weight="weight")
+        return modularity
+    except Exception:
+        return 0.0
+
+
+def find_optimal_clusters(
+    hierarchy_df,
+    transmission_df,
+    cluster_bas,
+    grouping_column,
+    min_regions,
+    max_regions,
+):
+    """
+    Find the optimal number of clusters by maximizing modularity.
+
+    Returns (best_clusters, best_n, best_modularity, all_scores)
+    """
+    # Build graph for modularity calculation
+    graph = build_transmission_graph(transmission_df, cluster_bas)
+
+    best_clusters = None
+    best_n = min_regions
+    best_modularity = -1.0
+    all_scores = {}
+
+    for n in range(min_regions, max_regions + 1):
+        clusters = hierarchical_cluster(
+            hierarchy_df, transmission_df, cluster_bas, grouping_column, n
+        )
+
+        modularity = calculate_modularity(graph, clusters)
+        all_scores[n] = modularity
+
+        if modularity > best_modularity:
+            best_modularity = modularity
+            best_n = n
+            best_clusters = clusters
+
+    return best_clusters, best_n, best_modularity, all_scores
 
 
 def generate_cluster_names(clusters, groups):
@@ -883,20 +954,31 @@ def generate_cluster_names(clusters, groups):
     return cluster_names
 
 
-def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_groups):
+def run_clustering(
+    selected_bas,
+    grouping_column,
+    target_regions,
+    no_cluster_groups,
+    auto_optimize=False,
+    min_regions=None,
+    max_regions=None,
+):
     """
     Run the clustering algorithm.
 
-    Returns a tuple of (model_regions, region_aggregations, error_message)
+    Returns a tuple of (model_regions, region_aggregations, error_message, info)
+    where info is a dict with optional metadata like chosen_n and modularity.
     """
     try:
+        info = {}
+
         # Filter hierarchy to selected BAs
         hierarchy = state.hierarchy_df[
             state.hierarchy_df["ba"].isin(selected_bas)
         ].copy()
 
         if len(hierarchy) == 0:
-            return None, None, "No valid BAs selected"
+            return None, None, "No valid BAs selected", info
 
         # Identify BAs to keep unclustered
         unclustered_bas = set()
@@ -931,22 +1013,51 @@ def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_gro
                 region_aggregations[region_name] = [ba]
 
             model_regions = sorted(region_aggregations.keys())
-            return model_regions, region_aggregations, None
-
-        # Build graph for clustering
-        graph = build_transmission_graph(state.transmission_df, cluster_bas)
+            return model_regions, region_aggregations, None, info
 
         # Get regional groups
         groups = get_regional_groups(hierarchy, grouping_column, cluster_bas)
 
-        # Determine actual target (accounting for unclustered)
-        actual_target = max(1, target_regions - len(unclustered_bas))
-        actual_target = min(actual_target, len(cluster_bas))
+        # Determine number of unclustered regions
+        num_unclustered = len(unclustered_bas)
 
-        # Run hierarchical clustering that respects grouping column boundaries
-        clusters = hierarchical_cluster(
-            hierarchy, state.transmission_df, cluster_bas, grouping_column, actual_target
-        )
+        if auto_optimize and min_regions is not None and max_regions is not None:
+            # Auto-optimize mode: find best number of clusters
+            actual_min = max(1, min_regions - num_unclustered)
+            actual_max = max(1, max_regions - num_unclustered)
+            actual_max = min(actual_max, len(cluster_bas))
+            actual_min = min(actual_min, actual_max)
+
+            clusters, chosen_n, modularity, all_scores = find_optimal_clusters(
+                hierarchy,
+                state.transmission_df,
+                cluster_bas,
+                grouping_column,
+                actual_min,
+                actual_max,
+            )
+
+            info["chosen_n"] = chosen_n + num_unclustered
+            info["modularity"] = modularity
+            info["all_scores"] = all_scores
+        else:
+            # Fixed target mode
+            actual_target = max(1, target_regions - num_unclustered)
+            actual_target = min(actual_target, len(cluster_bas))
+
+            # Run hierarchical clustering that respects grouping column boundaries
+            clusters = hierarchical_cluster(
+                hierarchy,
+                state.transmission_df,
+                cluster_bas,
+                grouping_column,
+                actual_target,
+            )
+
+            # Calculate modularity for info
+            graph = build_transmission_graph(state.transmission_df, cluster_bas)
+            modularity = calculate_modularity(graph, clusters)
+            info["modularity"] = modularity
 
         # Generate names
         cluster_names = generate_cluster_names(clusters, groups)
@@ -990,10 +1101,10 @@ def run_clustering(selected_bas, grouping_column, target_regions, no_cluster_gro
 
         model_regions = sorted(region_aggregations.keys())
 
-        return model_regions, region_aggregations, None
+        return model_regions, region_aggregations, None, info
 
     except Exception as e:
-        return None, None, str(e)
+        return None, None, str(e), {}
 
 
 def generate_yaml(model_regions, region_aggregations):
@@ -1015,7 +1126,19 @@ def on_run_clustering(event):
     set_status("Running clustering...", "info")
 
     grouping_col = document.getElementById("groupingColumn").value
-    target_regions = int(document.getElementById("targetRegions").value)
+
+    # Check if auto-optimize mode is enabled
+    auto_optimize_el = document.getElementById("autoOptimize")
+    auto_optimize = auto_optimize_el.checked if auto_optimize_el else False
+
+    if auto_optimize:
+        min_regions = int(document.getElementById("minRegions").value)
+        max_regions = int(document.getElementById("maxRegions").value)
+        target_regions = None  # Will be determined by optimization
+    else:
+        target_regions = int(document.getElementById("targetRegions").value)
+        min_regions = None
+        max_regions = None
 
     # Get no-cluster selections
     no_cluster_groups = []
@@ -1024,11 +1147,14 @@ def on_run_clustering(event):
         no_cluster_groups.append(cb.value)
 
     # Run clustering
-    model_regions, region_aggregations, error = run_clustering(
+    model_regions, region_aggregations, error, info = run_clustering(
         state.selected_bas,
         grouping_col,
-        target_regions,
+        target_regions if not auto_optimize else min_regions,  # Use min as fallback
         no_cluster_groups,
+        auto_optimize=auto_optimize,
+        min_regions=min_regions,
+        max_regions=max_regions,
     )
 
     if error:
@@ -1043,16 +1169,30 @@ def on_run_clustering(event):
     if yaml_el:
         yaml_el.value = yaml_output
 
-    # Check if we got more regions than targeted
+    # Build status message
     num_regions = len(model_regions)
-    if num_regions > target_regions:
+    modularity = info.get("modularity", 0)
+
+    if auto_optimize:
+        chosen_n = info.get("chosen_n", num_regions)
         set_status(
-            f"Warning: Created {num_regions} regions, which is more than the target of {target_regions}. "
-            f"This can happen when 'unclustered' groups or disconnected BAs exceed the target.",
-            "error",
+            f"Clustering complete! {num_regions} regions (optimal from {min_regions}-{max_regions}). "
+            f"Modularity: {modularity:.3f}",
+            "success",
         )
     else:
-        set_status(f"Clustering complete! {num_regions} regions created.", "success")
+        if num_regions > target_regions:
+            set_status(
+                f"Warning: Created {num_regions} regions, which is more than the target of {target_regions}. "
+                f"This can happen when 'unclustered' groups or disconnected BAs exceed the target. "
+                f"Modularity: {modularity:.3f}",
+                "error",
+            )
+        else:
+            set_status(
+                f"Clustering complete! {num_regions} regions created. Modularity: {modularity:.3f}",
+                "success",
+            )
 
     # Store region aggregations for transmission line drawing
     state.region_aggregations = region_aggregations

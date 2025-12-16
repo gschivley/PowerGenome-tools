@@ -404,6 +404,23 @@
                         toggle.textContent = '▶ Show';
                     }
                 }
+
+                function toggleAutoOptimize() {
+                    const checkbox = document.getElementById('autoOptimize');
+                    const fixedRow = document.getElementById('fixedTargetRow');
+                    const rangeRow = document.getElementById('rangeTargetRow');
+                    if (checkbox.checked) {
+                        fixedRow.style.display = 'none';
+                        rangeRow.style.display = 'block';
+                    } else {
+                        fixedRow.style.display = 'block';
+                        rangeRow.style.display = 'none';
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.getElementById('autoOptimize').addEventListener('change', toggleAutoOptimize);
+                });
             </script>
 
             <div id="statusBox" class="status info">Click BAs on the map to select them for clustering.</div>
@@ -421,8 +438,32 @@
             </div>
 
             <div class="section">
-                <label>Target Number of Regions</label>
-                <input id="targetRegions" type="number" value="10" min="1" max="134" />
+                <label>Number of Regions</label>
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                    <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 12px;">
+                        <input type="checkbox" id="autoOptimize" style="width: auto; margin: 0;">
+                        Auto-optimize
+                    </label>
+                </div>
+                <div id="fixedTargetRow">
+                    <label style="font-size: 12px;">Target</label>
+                    <input id="targetRegions" type="number" value="10" min="1" max="134" />
+                </div>
+                <div id="rangeTargetRow" style="display: none;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px;">Min</label>
+                            <input id="minRegions" type="number" value="5" min="1" max="134" />
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px;">Max</label>
+                            <input id="maxRegions" type="number" value="20" min="1" max="134" />
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        Picks best modularity score
+                    </div>
+                </div>
             </div>
 
             <div class="section">
