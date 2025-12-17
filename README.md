@@ -2,6 +2,8 @@
 
 This repository contains tools for clustering Balancing Authorities (BAs) into model regions and aggregating power plants for energy system modeling (specifically PowerGenome/GenX). The primary interface is a web-based application running entirely in the browser via PyScript.
 
+**[Full Documentation](https://gschivley.github.io/PowerGenome-tools/)**
+
 ## Web Application
 
 The tool is located in the `web/` directory. It allows users to interactively select regions, configure clustering parameters, and visualize results on a map.
