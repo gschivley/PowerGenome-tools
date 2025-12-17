@@ -18,6 +18,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.0",
     "networkx>=3.6.1",
     "numpy>=2.3.5",
     "pandas>=2.3.3",

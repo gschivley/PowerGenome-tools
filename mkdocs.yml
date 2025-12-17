@@ -1,0 +1,54 @@
+site_name: PowerGenome Tools
+site_description: Documentation for PowerGenome clustering tools and web application.
+site_url: https://gschivley.github.io/PowerGenome-tools/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: blue
+      accent: deep orange
+    - scheme: slate
+      primary: blue
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Web Application: web_app.md
+  - Algorithms: algorithms.md
+  - Development: development.md
+
+plugins:
+  - search
+
+hooks:
+  - hooks.py
+
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - toc:
+      permalink: true
