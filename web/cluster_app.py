@@ -1554,17 +1554,32 @@ def suggest_plant_clusters(
                 improvement2 = max(0.0, (inertia1 - inertia2) / inertia1)
 
         desired = 1
-        if n_units >= 2 and (
-            total_cap >= cap_threshold
-            or hr_iqr_val >= hr_iqr_threshold
-            or improvement2 >= 0.15
+        # Only suggest splitting if there is actual variation in efficiency/performance
+        has_variance = hr_iqr_val > 0.01 or improvement2 > 0.01
+
+        if (
+            n_units >= 2
+            and has_variance
+            and (
+                total_cap >= cap_threshold
+                or hr_iqr_val >= hr_iqr_threshold
+                or improvement2 >= 0.15
+            )
         ):
             desired = min(2, n_units)
 
         if n_units >= 3 and improvement2 >= 0.3:
             desired = min(3, n_units)
 
-        priority = total_cap * (1.0 + hr_iqr_val) * (1.0 + improvement2)
+        # Allow up to 5 clusters if budget permits and variance is high
+        if n_units >= 4 and improvement2 >= 0.4:
+            desired = min(4, n_units)
+
+        if n_units >= 5 and improvement2 >= 0.5:
+            desired = min(5, n_units)
+
+        # Priority scales with variance, so identical units (IQR=0) get low priority
+        priority = total_cap * (hr_iqr_val + improvement2)
 
         raw_tech_map.setdefault(tech_group, set()).update(
             sub["technology"].dropna().unique()

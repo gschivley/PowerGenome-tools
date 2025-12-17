@@ -259,84 +259,6 @@
         }
 
         .mode-btn {
-
-            .tab-bar {
-                display: flex;
-                gap: 6px;
-                margin-bottom: 12px;
-            }
-
-            .tab-btn {
-                flex: 1;
-                padding: 8px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                background: white;
-                cursor: pointer;
-                font-weight: 600;
-                transition: background 0.2s, color 0.2s, border-color 0.2s;
-            }
-
-            .tab-btn.active {
-                background: #0066cc;
-                color: white;
-                border-color: #0066cc;
-            }
-
-            .tab-content {
-                display: none;
-            }
-
-            .tab-content.active {
-                display: block;
-            }
-
-            .candidate-item {
-                padding: 6px 8px;
-                border: 1px solid #eee;
-                border-radius: 4px;
-                margin-bottom: 6px;
-                background: #fff;
-                font-size: 12px;
-            }
-
-            .group-editor {
-                margin-top: 8px;
-                border: 1px solid #e0e0e0;
-                border-radius: 6px;
-                padding: 10px;
-                background: #fff;
-            }
-
-            .dual-list {
-                display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                gap: 8px;
-                align-items: center;
-            }
-
-            .dual-list select {
-                height: 180px;
-                width: 100%;
-            }
-
-            .dual-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .small-btn {
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-
-            .group-empty {
-                font-size: 12px;
-                color: #666;
-                margin-top: 6px;
-            }
-
             flex: 1;
             padding: 6px 8px;
             border: 1px solid #ccc;
@@ -345,6 +267,120 @@
             cursor: pointer;
             font-size: 12px;
             transition: all 0.2s;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #0066cc;
+            color: white;
+            border-color: #0066cc;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .candidate-item {
+            padding: 6px 8px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            background: #fff;
+            font-size: 12px;
+        }
+
+        /* Tooltip styles */
+        .info-icon {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            line-height: 14px;
+            text-align: center;
+            border-radius: 50%;
+            background: #999;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 4px;
+            position: relative;
+        }
+
+        .info-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            width: 220px;
+            padding: 8px;
+            background: #333;
+            color: white;
+            font-size: 11px;
+            border-radius: 4px;
+            z-index: 1000;
+            font-weight: normal;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            white-space: normal;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        .group-editor {
+            margin-top: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px;
+            background: #fff;
+        }
+
+        .dual-list {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .dual-list select {
+            height: 180px;
+            width: 100%;
+        }
+
+        .dual-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .small-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .group-empty {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
         }
 
         .mode-btn:hover {
@@ -754,7 +790,11 @@
                         placeholder="Run plant clustering to generate YAML..."></textarea>
                 </div>
                 <div class="section">
-                    <label>Top candidates for more splits</label>
+                    <label style="display: flex; align-items: center;">
+                        Top candidates for more splits
+                        <span class="info-icon"
+                            data-tooltip="The 'desired' count (1-5) is calculated using the Capacity and Heat-rate IQR thresholds you set above, plus potential improvement from splitting. It suggests how many clusters would be ideal if the budget allowed.">?</span>
+                    </label>
                     <div id="plantCandidateList" class="ba-list">
                         <em>Run plant clustering to see suggestions.</em>
                     </div>
