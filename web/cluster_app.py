@@ -964,7 +964,9 @@ def hierarchical_cluster(
             # We use agglomerative clustering to decide how many clusters each group gets.
 
             # 1. Get reference allocation using agglomerative clustering
-            ref_clusters = agglomerative_cluster(graph, target_regions, linkage="sum")
+            ref_clusters = agglomerative_cluster(
+                graph, target_regions, linkage="average"
+            )
 
             # 2. Count clusters per group
             group_allocations = {g: 0 for g in groups}
