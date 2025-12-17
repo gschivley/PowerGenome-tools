@@ -605,6 +605,74 @@ def update_no_cluster_options():
 # ============================================================================
 
 
+def standardize_features(matrix):
+    """Standardize columns to zero mean, unit variance."""
+    means = np.nanmean(matrix, axis=0)
+    stds = np.nanstd(matrix, axis=0)
+    stds = np.where(stds == 0, 1.0, stds)
+    return (matrix - means) / stds
+
+
+def run_kmeans_simple(features, k, weights=None, max_iter=40, seed=42):
+    """Simple k-means implementation returning (inertia, centers, labels)."""
+    rng = np.random.default_rng(seed)
+    n_samples = features.shape[0]
+    if k <= 0 or n_samples == 0:
+        return 0.0, None, None
+
+    # Initialize centers from samples
+    init_idx = rng.choice(n_samples, size=min(k, n_samples), replace=False)
+    centers = features[init_idx]
+
+    labels = np.zeros(n_samples, dtype=int)
+
+    for _ in range(max_iter):
+        # Assign
+        dists = np.linalg.norm(features[:, None, :] - centers[None, :, :], axis=2) ** 2
+        labels = np.argmin(dists, axis=1)
+
+        # Update
+        new_centers = []
+        for i in range(k):
+            mask = labels == i
+            if not np.any(mask):
+                # Keep old center if empty
+                new_centers.append(centers[i])
+                continue
+
+            cluster_points = features[mask]
+            if weights is not None:
+                cluster_weights = weights[mask][:, None]
+                new_center = (cluster_points * cluster_weights).sum(
+                    axis=0
+                ) / cluster_weights.sum()
+            else:
+                new_center = cluster_points.mean(axis=0)
+            new_centers.append(new_center)
+
+        new_centers = np.vstack(new_centers)
+        if np.allclose(new_centers, centers):
+            centers = new_centers
+            break
+        centers = new_centers
+
+    # Compute inertia
+    inertia = 0.0
+    for i in range(k):
+        mask = labels == i
+        if not np.any(mask):
+            continue
+        cluster_points = features[mask]
+        cluster_center = centers[i]
+        sq_dists = np.sum((cluster_points - cluster_center) ** 2, axis=1)
+        if weights is not None:
+            inertia += float((sq_dists * weights[mask]).sum())
+        else:
+            inertia += float(sq_dists.sum())
+
+    return inertia, centers, labels
+
+
 def build_transmission_graph(transmission_df, valid_bas):
     """Build undirected weighted graph from transmission data."""
     G = nx.Graph()
@@ -648,14 +716,14 @@ def get_regional_groups(hierarchy_df, grouping_column, valid_bas):
     return groups
 
 
-def agglomerative_cluster(graph, n_clusters):
+def agglomerative_cluster(graph, n_clusters, linkage="sum"):
     """
     Perform agglomerative clustering on a graph.
 
-    Uses a greedy approach: repeatedly merge the two clusters with the
-    highest total edge weight between them until reaching n_clusters.
-
-    This replaces spectral clustering and requires only NetworkX/NumPy.
+    Linkage methods:
+    - 'sum': Merge based on sum of edge weights (standard).
+    - 'average': Merge based on average edge weight (sum / (size_a * size_b)).
+    - 'max': Merge based on maximum single edge weight (single linkage).
     """
     nodes = list(graph.nodes())
     n = len(nodes)
@@ -665,39 +733,53 @@ def agglomerative_cluster(graph, n_clusters):
         return {i: {node} for i, node in enumerate(nodes)}
 
     # Initialize: each node is its own cluster
-    # Use a dict mapping cluster_id -> set of nodes
     clusters = {i: {node} for i, node in enumerate(nodes)}
     node_to_cluster = {node: i for i, node in enumerate(nodes)}
+    cluster_sizes = {i: 1 for i in range(n)}
 
     # Build initial inter-cluster weights
-    # cluster_weights[(c1, c2)] = total weight between clusters c1 and c2
     cluster_weights = {}
     for u, v, data in graph.edges(data=True):
         c1, c2 = node_to_cluster[u], node_to_cluster[v]
         if c1 != c2:
             key = (min(c1, c2), max(c1, c2))
             weight = data.get("weight", 1.0)
-            cluster_weights[key] = cluster_weights.get(key, 0) + weight
+
+            if linkage == "max":
+                current = cluster_weights.get(key, -float("inf"))
+                cluster_weights[key] = max(current, weight)
+            else:
+                cluster_weights[key] = cluster_weights.get(key, 0) + weight
 
     # Merge until we reach target number of clusters
     while len(clusters) > n_clusters:
         if not cluster_weights:
-            # No more edges to merge on - remaining clusters are disconnected
-            # Just keep them as separate clusters
             break
 
-        # Find the pair with maximum weight
-        best_pair = max(cluster_weights.keys(), key=lambda k: cluster_weights[k])
+        # Find the pair with maximum score
+        if linkage == "average":
+
+            def get_score(k):
+                c1, c2 = k
+                w = cluster_weights[k]
+                return w / (cluster_sizes[c1] * cluster_sizes[c2])
+
+            best_pair = max(cluster_weights.keys(), key=get_score)
+        else:
+            best_pair = max(cluster_weights.keys(), key=lambda k: cluster_weights[k])
+
         c1, c2 = best_pair
 
         # Merge c2 into c1
         clusters[c1].update(clusters[c2])
+        cluster_sizes[c1] += cluster_sizes[c2]
+        del cluster_sizes[c2]
+
         for node in clusters[c2]:
             node_to_cluster[node] = c1
         del clusters[c2]
 
         # Update cluster weights
-        # Remove all edges involving c2, add them to c1
         new_weights = {}
         keys_to_remove = []
 
@@ -708,13 +790,24 @@ def agglomerative_cluster(graph, n_clusters):
                 other = cb if ca == c2 else ca
                 if other != c1:
                     new_key = (min(c1, other), max(c1, other))
-                    new_weights[new_key] = new_weights.get(new_key, 0) + weight
+
+                    # Get existing weight between c1 and other
+                    w1 = cluster_weights.get(new_key)
+
+                    if linkage == "max":
+                        val1 = w1 if w1 is not None else -float("inf")
+                        new_val = max(val1, weight)
+                    else:
+                        val1 = w1 if w1 is not None else 0
+                        new_val = val1 + weight
+
+                    new_weights[new_key] = new_val
 
         for key in keys_to_remove:
             del cluster_weights[key]
 
         for key, weight in new_weights.items():
-            cluster_weights[key] = cluster_weights.get(key, 0) + weight
+            cluster_weights[key] = weight
 
     # Renumber clusters to be sequential
     result = {}
@@ -722,6 +815,60 @@ def agglomerative_cluster(graph, n_clusters):
         result[i] = nodes_set
 
     return result
+
+
+def spectral_cluster(graph, n_clusters):
+    """
+    Perform spectral clustering on the graph using Normalized Laplacian.
+    """
+    nodes = list(graph.nodes())
+    n = len(nodes)
+    if n <= n_clusters:
+        return {i: {node} for i, node in enumerate(nodes)}
+
+    node_to_idx = {node: i for i, node in enumerate(nodes)}
+
+    # Adjacency matrix
+    A = np.zeros((n, n))
+    for u, v, data in graph.edges(data=True):
+        i, j = node_to_idx[u], node_to_idx[v]
+        w = data.get("weight", 1.0)
+        A[i, j] = w
+        A[j, i] = w
+
+    # Degree matrix
+    d = np.sum(A, axis=1)
+
+    # Normalized Laplacian: L_sym = I - D^-1/2 * A * D^-1/2
+    d_inv_sqrt = np.power(d, -0.5, where=d > 0)
+    d_inv_sqrt[d == 0] = 0
+    D_inv_sqrt = np.diag(d_inv_sqrt)
+
+    L = np.eye(n) - D_inv_sqrt @ A @ D_inv_sqrt
+
+    # Eigen decomposition
+    vals, vecs = np.linalg.eigh(L)
+
+    # First k eigenvectors
+    k = n_clusters
+    X = vecs[:, :k]
+
+    # Normalize rows
+    rows_norm = np.linalg.norm(X, axis=1, keepdims=True)
+    rows_norm[rows_norm == 0] = 1
+    X_normalized = X / rows_norm
+
+    # Run K-Means
+    _, _, labels = run_kmeans_simple(X_normalized, k)
+
+    # Convert labels back to clusters
+    clusters = {}
+    for idx, label in enumerate(labels):
+        if label not in clusters:
+            clusters[label] = set()
+        clusters[label].add(nodes[idx])
+
+    return clusters
 
 
 def louvain_cluster(graph):
@@ -754,7 +901,12 @@ def louvain_cluster(graph):
 
 
 def hierarchical_cluster(
-    hierarchy_df, transmission_df, cluster_bas, grouping_column, target_regions
+    hierarchy_df,
+    transmission_df,
+    cluster_bas,
+    grouping_column,
+    target_regions,
+    method="hierarchical-sum",
 ):
     """
     Hierarchical clustering that respects grouping column boundaries.
@@ -764,6 +916,18 @@ def hierarchical_cluster(
 
     Grouping column regions are never split across model regions.
     """
+    # Parse method
+    if method == "spectral":
+        algo = "spectral"
+        linkage = None
+    elif method.startswith("hierarchical-"):
+        algo = "hierarchical"
+        linkage = method.split("-")[1]
+    else:
+        # Default
+        algo = "hierarchical"
+        linkage = "sum"
+
     # Group BAs by their grouping column value
     groups = {}
     for _, row in hierarchy_df[hierarchy_df["ba"].isin(cluster_bas)].iterrows():
@@ -777,52 +941,68 @@ def hierarchical_cluster(
 
     # If target is >= number of groups, cluster within each group
     if target_regions >= num_groups:
-        # Distribute target across groups proportionally
-        # Each group gets at least 1 region
-        regions_per_group = {}
-        remaining_regions = target_regions
+        # Build map of BA to group
+        ba_to_group = {}
+        for group, bas in groups.items():
+            for ba in bas:
+                ba_to_group[ba] = group
 
-        # First pass: give each group 1 region
-        for group in groups:
-            regions_per_group[group] = 1
-            remaining_regions -= 1
+        # Build full graph
+        graph = build_transmission_graph(transmission_df, cluster_bas)
 
-        # Second pass: distribute remaining regions by group size
-        if remaining_regions > 0:
-            group_sizes = [(group, len(bas)) for group, bas in groups.items()]
-            group_sizes.sort(key=lambda x: -x[1])  # Largest first
+        # Remove edges between different groups to enforce group boundaries
+        edges_to_remove = []
+        for u, v in graph.edges():
+            if ba_to_group.get(u) != ba_to_group.get(v):
+                edges_to_remove.append((u, v))
 
-            for group, size in group_sizes:
-                if remaining_regions <= 0:
-                    break
-                # Give more regions to larger groups
-                max_additional = min(
-                    remaining_regions, size - 1
-                )  # Can't have more regions than BAs
-                regions_per_group[group] += max_additional
-                remaining_regions -= max_additional
+        graph.remove_edges_from(edges_to_remove)
 
-        # Cluster within each group
-        all_clusters = {}
-        cluster_id = 0
+        if algo == "spectral":
+            # For spectral clustering, we must run it independently on each group
+            # to avoid mixing eigenvectors of disconnected components.
+            # We use agglomerative clustering to decide how many clusters each group gets.
 
-        for group, group_bas in groups.items():
-            n_clusters_for_group = min(regions_per_group[group], len(group_bas))
+            # 1. Get reference allocation using agglomerative clustering
+            ref_clusters = agglomerative_cluster(graph, target_regions, linkage="sum")
 
-            if n_clusters_for_group == 1 or len(group_bas) == 1:
-                # Entire group becomes one cluster
-                all_clusters[cluster_id] = group_bas
-                cluster_id += 1
-            else:
+            # 2. Count clusters per group
+            group_allocations = {g: 0 for g in groups}
+            for _, nodes in ref_clusters.items():
+                # Pick a representative node to find the group
+                # (All nodes in a cluster are in the same group because edges were removed)
+                if not nodes:
+                    continue
+                rep_node = next(iter(nodes))
+                grp = ba_to_group[rep_node]
+                group_allocations[grp] += 1
+
+            # 3. Run spectral clustering on each group independently
+            final_clusters = {}
+            cluster_id_counter = 0
+
+            for group, count in group_allocations.items():
+                if count == 0:
+                    continue
+
+                group_bas = groups[group]
                 # Build subgraph for this group
                 subgraph = build_transmission_graph(transmission_df, group_bas)
-                sub_clusters = agglomerative_cluster(subgraph, n_clusters_for_group)
 
-                for label, nodes in sub_clusters.items():
-                    all_clusters[cluster_id] = nodes
-                    cluster_id += 1
+                # Run spectral on subgraph
+                sub_clusters = spectral_cluster(subgraph, count)
 
-        return all_clusters
+                # Add to final result
+                for _, nodes in sub_clusters.items():
+                    final_clusters[cluster_id_counter] = nodes
+                    cluster_id_counter += 1
+
+            return final_clusters
+        else:
+            # Run agglomerative clustering on the whole graph
+            # This prioritizes the strongest connections across all groups
+            # instead of pre-allocating a fixed number of clusters per group
+            return agglomerative_cluster(graph, target_regions, linkage=linkage)
 
     else:
         # target_regions < num_groups: need to merge entire groups
@@ -855,8 +1035,13 @@ def hierarchical_cluster(
                 else:
                     group_graph.add_edge(group_from, group_to, weight=capacity)
 
-        # Cluster groups using agglomerative clustering
-        group_clusters = agglomerative_cluster(group_graph, target_regions)
+        # Cluster groups
+        if algo == "spectral":
+            group_clusters = spectral_cluster(group_graph, target_regions)
+        else:
+            group_clusters = agglomerative_cluster(
+                group_graph, target_regions, linkage=linkage
+            )
 
         # Convert group clusters to BA clusters
         all_clusters = {}
@@ -1092,6 +1277,7 @@ def run_clustering(
     auto_optimize=False,
     min_regions=None,
     max_regions=None,
+    method="hierarchical-sum",
 ):
     """
     Run the clustering algorithm.
@@ -1175,14 +1361,27 @@ def run_clustering(
             actual_target = max(1, target_regions - num_unclustered)
             actual_target = min(actual_target, len(cluster_bas))
 
-            # Run hierarchical clustering that respects grouping column boundaries
-            clusters = hierarchical_cluster(
-                hierarchy,
-                state.transmission_df,
-                cluster_bas,
-                grouping_column,
-                actual_target,
-            )
+            if method == "louvain":
+                clusters, _, modularity_val, _ = find_optimal_clusters(
+                    hierarchy,
+                    state.transmission_df,
+                    cluster_bas,
+                    grouping_column,
+                    actual_target,  # min
+                    actual_target,  # max
+                )
+                # find_optimal_clusters calculates modularity, but we'll recalculate it below
+                # to be consistent with other methods.
+            else:
+                # Run hierarchical clustering that respects grouping column boundaries
+                clusters = hierarchical_cluster(
+                    hierarchy,
+                    state.transmission_df,
+                    cluster_bas,
+                    grouping_column,
+                    actual_target,
+                    method=method,
+                )
 
             # Calculate modularity for info
             graph = build_transmission_graph(state.transmission_df, cluster_bas)
@@ -1364,74 +1563,6 @@ def weighted_iqr(values, weights):
         weighted_quantile(values, 0.75, weights)
         - weighted_quantile(values, 0.25, weights)
     )
-
-
-def standardize_features(matrix):
-    """Standardize columns to zero mean, unit variance."""
-    means = np.nanmean(matrix, axis=0)
-    stds = np.nanstd(matrix, axis=0)
-    stds = np.where(stds == 0, 1.0, stds)
-    return (matrix - means) / stds
-
-
-def run_kmeans_simple(features, k, weights=None, max_iter=40, seed=42):
-    """Simple k-means implementation returning (inertia, centers, labels)."""
-    rng = np.random.default_rng(seed)
-    n_samples = features.shape[0]
-    if k <= 0 or n_samples == 0:
-        return 0.0, None, None
-
-    # Initialize centers from samples
-    init_idx = rng.choice(n_samples, size=min(k, n_samples), replace=False)
-    centers = features[init_idx]
-
-    labels = np.zeros(n_samples, dtype=int)
-
-    for _ in range(max_iter):
-        # Assign
-        dists = np.linalg.norm(features[:, None, :] - centers[None, :, :], axis=2) ** 2
-        labels = np.argmin(dists, axis=1)
-
-        # Update
-        new_centers = []
-        for i in range(k):
-            mask = labels == i
-            if not np.any(mask):
-                # Keep old center if empty
-                new_centers.append(centers[i])
-                continue
-
-            cluster_points = features[mask]
-            if weights is not None:
-                cluster_weights = weights[mask][:, None]
-                new_center = (cluster_points * cluster_weights).sum(
-                    axis=0
-                ) / cluster_weights.sum()
-            else:
-                new_center = cluster_points.mean(axis=0)
-            new_centers.append(new_center)
-
-        new_centers = np.vstack(new_centers)
-        if np.allclose(new_centers, centers):
-            centers = new_centers
-            break
-        centers = new_centers
-
-    # Compute inertia
-    inertia = 0.0
-    for i in range(k):
-        mask = labels == i
-        if not np.any(mask):
-            continue
-        cluster_points = features[mask]
-        cluster_center = centers[i]
-        sq_dists = np.sum((cluster_points - cluster_center) ** 2, axis=1)
-        if weights is not None:
-            inertia += float((sq_dists * weights[mask]).sum())
-        else:
-            inertia += float(sq_dists.sum())
-
-    return inertia, centers, labels
 
 
 def inertia_single_cluster(features, weights=None):
@@ -1708,6 +1839,7 @@ def on_run_clustering(event):
     set_status("Running clustering...", "info")
 
     grouping_col = document.getElementById("groupingColumn").value
+    method = document.getElementById("clusteringMethod").value
 
     # Check if auto-optimize mode is enabled
     auto_optimize_el = document.getElementById("autoOptimize")
@@ -1737,6 +1869,7 @@ def on_run_clustering(event):
         auto_optimize=auto_optimize,
         min_regions=min_regions,
         max_regions=max_regions,
+        method=method,
     )
 
     if error:

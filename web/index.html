@@ -330,8 +330,8 @@
             content: attr(data-tooltip);
             position: absolute;
             bottom: 100%;
-            right: 0;
-            width: 220px;
+            left: 0;
+            width: 200px;
             padding: 8px;
             background: #333;
             color: white;
@@ -540,12 +540,16 @@
                         const checkbox = document.getElementById('autoOptimize');
                         const fixedRow = document.getElementById('fixedTargetRow');
                         const rangeRow = document.getElementById('rangeTargetRow');
+                        const methodSection = document.getElementById('clusteringMethodSection');
+
                         if (checkbox.checked) {
                             fixedRow.style.display = 'none';
                             rangeRow.style.display = 'block';
+                            if (methodSection) methodSection.style.display = 'none';
                         } else {
                             fixedRow.style.display = 'block';
                             rangeRow.style.display = 'none';
+                            if (methodSection) methodSection.style.display = 'block';
                         }
                     }
 
@@ -584,6 +588,8 @@
                             <input type="checkbox" id="autoOptimize" style="width: auto; margin: 0;">
                             Auto-optimize
                         </label>
+                        <span class="info-icon"
+                            data-tooltip="Uses Louvain clustering to automatically determine the optimal number of regions based on modularity.">?</span>
                     </div>
                     <div id="fixedTargetRow">
                         <label style="font-size: 12px;">Target</label>
@@ -593,16 +599,30 @@
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <div style="flex: 1;">
                                 <label style="font-size: 12px;">Min</label>
-                                <input id="minRegions" type="number" value="5" min="1" max="134" />
+                                <input id="minRegions" type="number" value="20" min="1" max="134" />
                             </div>
                             <div style="flex: 1;">
                                 <label style="font-size: 12px;">Max</label>
-                                <input id="maxRegions" type="number" value="20" min="1" max="134" />
+                                <input id="maxRegions" type="number" value="40" min="1" max="134" />
                             </div>
                         </div>
                         <div style="font-size: 11px; color: #666; margin-top: 4px;">
                             Picks best modularity score
                         </div>
+                    </div>
+                </div>
+
+                <div class="section" id="clusteringMethodSection">
+                    <label>Clustering Method</label>
+                    <select id="clusteringMethod">
+                        <option value="spectral" selected>Spectral Clustering</option>
+                        <option value="louvain">Louvain (Fixed)</option>
+                        <option value="hierarchical-average">Hierarchical (Average Linkage)</option>
+                        <option value="hierarchical-max">Hierarchical (Max Linkage)</option>
+                        <option value="hierarchical-sum">Hierarchical (Sum Linkage)</option>
+                    </select>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        Algorithm used to merge regions.
                     </div>
                 </div>
 
