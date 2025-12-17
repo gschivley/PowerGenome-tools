@@ -46,3 +46,10 @@ Only the web app in `/web` matters; CLI and legacy docs are ignored.
 - If data fetch returns HTML (wrong path/serve), `load_data()` raises with first 100 chars sample.
 - Unknown BAs in hierarchy vs. transmission: edges are skipped; plants mapped to missing BAs are dropped after merge.
 - Auto-optimize: `min_regions`/`max_regions` apply after accounting for `no_cluster` exclusions; modularity stored in `info`.
+
+## Local Development
+- Edit files in `/web/cluster_app.py` and `/web/index.html`.
+- Test changes by serving `/web` via local HTTP server (e.g., `python -m http.server 8000`).
+- Use browser console for PyScript errors; use `console.log()` in Python via `js.console.log()`.
+- Local environment set up using uv and .venv. All scripts and tests should use this environment.
+- Dependencies are listed in pyproject.toml and uv.lock.
