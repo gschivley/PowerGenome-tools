@@ -1140,6 +1140,48 @@ def find_optimal_clusters(
 
     num_clusters = len(all_clusters)
 
+    # Capture optimal here
+    optimal_clusters = dict(all_clusters)
+
+    # If we have fewer clusters than min_regions, split using agglomerative clustering
+    if num_clusters < min_regions:
+        # We need to split clusters until we reach min_regions
+        # We will greedily split the largest cluster (by number of BAs)
+
+        # Convert to mutable dict
+        current_clusters = dict(all_clusters)
+        next_id = max(current_clusters.keys()) + 1 if current_clusters else 0
+
+        while len(current_clusters) < min_regions:
+            # Find cluster with most BAs that has at least 2 BAs
+            candidates = [
+                (cid, len(nodes))
+                for cid, nodes in current_clusters.items()
+                if len(nodes) > 1
+            ]
+
+            if not candidates:
+                break  # Cannot split further
+
+            # Pick largest
+            cid_to_split, _ = max(candidates, key=lambda x: x[1])
+            nodes_to_split = current_clusters[cid_to_split]
+
+            # Build subgraph
+            subgraph = build_transmission_graph(transmission_df, nodes_to_split)
+
+            # Split into 2 using agglomerative clustering (average linkage for balanced splits)
+            split_res = agglomerative_cluster(subgraph, 2, linkage="average")
+
+            # Update clusters
+            del current_clusters[cid_to_split]
+            current_clusters[cid_to_split] = split_res[0]  # Reuse ID for one
+            current_clusters[next_id] = split_res[1]  # New ID for other
+            next_id += 1
+
+        all_clusters = current_clusters
+        num_clusters = len(all_clusters)
+
     # If we have more clusters than max_regions, merge using agglomerative
     if num_clusters > max_regions:
         # Build a graph of the current clusters
@@ -1189,7 +1231,13 @@ def find_optimal_clusters(
     modularity = calculate_modularity(graph, all_clusters)
     num_clusters = len(all_clusters)
 
-    return all_clusters, num_clusters, modularity, {num_clusters: modularity}
+    return (
+        all_clusters,
+        num_clusters,
+        modularity,
+        {num_clusters: modularity},
+        optimal_clusters,
+    )
 
 
 def generate_cluster_names(clusters, groups):
@@ -1346,25 +1394,29 @@ def run_clustering(
             actual_max = min(actual_max, len(cluster_bas))
             actual_min = min(actual_min, actual_max)
 
-            clusters, chosen_n, modularity, all_scores = find_optimal_clusters(
-                hierarchy,
-                state.transmission_df,
-                cluster_bas,
-                grouping_column,
-                actual_min,
-                actual_max,
+            clusters, chosen_n, modularity, all_scores, optimal_clusters = (
+                find_optimal_clusters(
+                    hierarchy,
+                    state.transmission_df,
+                    cluster_bas,
+                    grouping_column,
+                    actual_min,
+                    actual_max,
+                )
             )
 
             info["chosen_n"] = chosen_n + num_unclustered
             info["modularity"] = modularity
             info["all_scores"] = all_scores
+            info["optimal_n"] = len(optimal_clusters) + num_unclustered
+            info["optimal_clusters"] = optimal_clusters
         else:
             # Fixed target mode
             actual_target = max(1, target_regions - num_unclustered)
             actual_target = min(actual_target, len(cluster_bas))
 
             if method == "louvain":
-                clusters, _, modularity_val, _ = find_optimal_clusters(
+                clusters, _, modularity_val, _, _ = find_optimal_clusters(
                     hierarchy,
                     state.transmission_df,
                     cluster_bas,
@@ -1409,6 +1461,34 @@ def run_clustering(
         for label, nodes in clusters.items():
             name = cluster_names[label]
             region_aggregations[name] = sorted(nodes)
+
+        # If we have optimal cluster info (from auto-optimize splitting), map it to region names
+        if "optimal_clusters" in info and len(info["optimal_clusters"]) < len(clusters):
+            optimal_combinations = []
+
+            # Map each BA to its final region name
+            ba_to_final_region = {}
+            for region_name, bas in region_aggregations.items():
+                for ba in bas:
+                    ba_to_final_region[ba] = region_name
+
+            # Check each optimal cluster
+            for _, opt_nodes in info["optimal_clusters"].items():
+                # Find which final regions are contained in this optimal cluster
+                contained_regions = set()
+                for ba in opt_nodes:
+                    if ba in ba_to_final_region:
+                        contained_regions.add(ba_to_final_region[ba])
+
+                # If more than one final region is in this optimal cluster, they would have been combined
+                if len(contained_regions) > 1:
+                    optimal_combinations.append(sorted(list(contained_regions)))
+
+            if optimal_combinations:
+                info["optimal_combinations"] = optimal_combinations
+
+            # Clean up large objects from info
+            del info["optimal_clusters"]
 
         # Add unclustered BAs with state abbreviation naming
         for ba in sorted(unclustered_bas):
@@ -1892,11 +1972,21 @@ def on_run_clustering(event):
 
     if auto_optimize:
         chosen_n = info.get("chosen_n", num_regions)
-        set_status(
-            f"Clustering complete! {num_regions} regions (optimal from {min_regions}-{max_regions}). "
-            f"Modularity: {modularity:.3f}",
-            "success",
-        )
+        msg = f"Clustering complete! {num_regions} regions (optimal from {min_regions}-{max_regions}). Modularity: {modularity:.3f}"
+
+        # Add info about optimal combinations if we forced splits
+        if "optimal_combinations" in info:
+            optimal_n = info.get("optimal_n", "unknown")
+            msg += f"\n\nOptimal number of clusters was {optimal_n}. The following regions would be combined in the optimal solution:\n"
+
+            # Format the combinations
+            combo_strs = []
+            for combo in info["optimal_combinations"]:
+                combo_strs.append(f"• {', '.join(combo)}")
+
+            msg += "\n".join(combo_strs)
+
+        set_status(msg, "success")
     else:
         if num_regions > target_regions:
             set_status(
