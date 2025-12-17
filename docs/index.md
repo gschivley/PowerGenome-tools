@@ -6,7 +6,7 @@ Welcome to the documentation for the PowerGenome Clustering Tools. This project 
 
 The project consists of a main component:
 
-1. **[Web Application](web_app.md)**: An interactive, browser-based tool for visualizing and clustering regions.
+1. **[Web Application](web_app.md)**: An interactive, browser-based tool for visualizing and clustering regions, and then generating existing powerplant clusters. Built with PyScript to run entirely in-browser, it allows users to select BAs on a map, configure clustering parameters, and export results in YAML format.
 
 ## Key Features
 
