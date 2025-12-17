@@ -39,6 +39,7 @@ extra_javascript:
   - https://unpkg.com/mermaid/dist/mermaid.min.js
 
 markdown_extensions:
+  - attr_list
   - admonition
   - pymdownx.details
   - pymdownx.superfences:
