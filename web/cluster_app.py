@@ -1243,9 +1243,12 @@ def find_optimal_clusters(
 def generate_cluster_names(clusters, groups):
     """Generate meaningful cluster names based on smallest containing grouping column.
 
-    For aggregated regions: Find the smallest grouping column where all BAs share
-    the same value, then name as <group_value><x> where x is an integer.
-    For single BAs: Use the state abbreviation.
+    Naming rules allow only state plus one other grouping column:
+    1) Use the state code when all BAs in the cluster share a state.
+    2) Pick a single grouping column (other than state) that can name every
+       remaining cluster; all non-state names must come from that one column.
+    3) If no column satisfies (2), still pick one column (broadest available)
+       and name every non-state cluster from that same column.
     """
     # Grouping columns ordered from smallest to largest geographic scope
     GROUPING_HIERARCHY = [
@@ -1260,55 +1263,73 @@ def generate_cluster_names(clusters, groups):
     cluster_names = {}
     name_counts = {}  # Track counts for each base name
 
+    def common_value(nodes_set, column):
+        vals = (
+            state.hierarchy_df[state.hierarchy_df["ba"].isin(nodes_set)][column]
+            .dropna()
+            .unique()
+        )
+        return vals[0] if len(vals) == 1 else None
+
+    # First pass: identify clusters that can use state names
+    single_state_labels = set()
+    for label, nodes in clusters.items():
+        st_val = common_value(nodes, "st")
+        if st_val:
+            single_state_labels.add(label)
+
+    # Choose one naming column for the remaining clusters
+    candidate_columns = [col for col in GROUPING_HIERARCHY if col != "st"]
+    naming_column = None
+
+    for col in candidate_columns:
+        if col not in state.hierarchy_df.columns:
+            continue
+
+        all_cover = True
+        for label, nodes in clusters.items():
+            if label in single_state_labels:
+                continue
+            if common_value(nodes, col) is None:
+                all_cover = False
+                break
+
+        if all_cover:
+            naming_column = col
+            break
+
+    # Fallback: pick the broadest available column
+    if naming_column is None:
+        for col in reversed(candidate_columns):
+            if col in state.hierarchy_df.columns:
+                naming_column = col
+                break
+
+    # Assign names
     for label, nodes in clusters.items():
         nodes_list = list(nodes)
 
-        # Single BA - use state abbreviation
-        if len(nodes_list) == 1:
-            ba = nodes_list[0]
-            # Get state for this BA
-            ba_row = state.hierarchy_df[state.hierarchy_df["ba"] == ba]
-            if not ba_row.empty:
-                st = ba_row.iloc[0]["st"]
-                base_name = st
-            else:
-                base_name = ba
-
-            # Add counter if needed
-            if base_name in name_counts:
-                name_counts[base_name] += 1
-                cluster_names[label] = f"{base_name}{name_counts[base_name]}"
-            else:
-                name_counts[base_name] = 1
-                cluster_names[label] = f"{base_name}1"
-            continue
-
-        # Multiple BAs - find smallest containing grouping column
-        found_group = None
-        group_value = None
-
-        for col in GROUPING_HIERARCHY:
-            if col not in state.hierarchy_df.columns:
-                continue
-
-            # Get values for all BAs in this cluster
-            ba_values = state.hierarchy_df[state.hierarchy_df["ba"].isin(nodes)][
-                col
-            ].unique()
-
-            # If all BAs share the same value, use this column
-            if len(ba_values) == 1:
-                found_group = col
-                group_value = ba_values[0]
-                break
-
-        if group_value:
-            base_name = group_value
+        # Single BA or single-state cluster
+        st_val = common_value(nodes, "st")
+        if st_val:
+            base_name = st_val if len(nodes_list) > 1 else st_val
         else:
-            # No common grouping found, use generic name
-            base_name = "Region"
+            if naming_column and naming_column in state.hierarchy_df.columns:
+                vals = (
+                    state.hierarchy_df[state.hierarchy_df["ba"].isin(nodes)][
+                        naming_column
+                    ]
+                    .dropna()
+                    .unique()
+                )
+                if len(vals) == 1:
+                    base_name = vals[0]
+                else:
+                    # Still stick to one column; join values if mixed
+                    base_name = "-".join(sorted([str(v) for v in vals])) or "Region"
+            else:
+                base_name = "Region"
 
-        # Add counter
         if base_name in name_counts:
             name_counts[base_name] += 1
             cluster_names[label] = f"{base_name}{name_counts[base_name]}"
