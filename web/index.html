@@ -776,14 +776,28 @@
                     </div>
                 </div>
                 <div class="section">
-                    <label>Omit technologies (select one or more)</label>
-                    <select id="omitTechSelect" multiple size="4" style="width: 100%; padding: 6px;">
-                        <option value="all other" selected>All Other</option>
-                        <option value="solar thermal" selected>Solar thermal</option>
-                        <option value="flywheel" selected>Flywheel</option>
-                    </select>
-                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
-                        Selected technologies are excluded from clustering.
+                    <label>Omit technologies</label>
+                    <div class="dual-list">
+                        <div>
+                            <div style="font-size: 12px; margin-bottom: 4px;">Available technologies</div>
+                            <select id="omitAvailableList" multiple size="8"></select>
+                        </div>
+                        <div class="dual-buttons">
+                            <button class="btn btn-secondary small-btn" id="omitMoveToSelectedBtn"
+                                type="button">&gt;&gt;</button>
+                            <button class="btn btn-secondary small-btn" id="omitMoveToAvailableBtn"
+                                type="button">&lt;&lt;</button>
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; margin-bottom: 4px;">Omitted technologies</div>
+                            <select id="omitSelectedList" multiple size="8"></select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-secondary small-btn" id="omitResetBtn" type="button">Reset
+                            defaults</button>
+                        <div style="font-size: 11px; color: #666;">All Other, Flywheel, and Solar thermal technologies
+                            start omitted.</div>
                     </div>
                 </div>
                 <div class="section">

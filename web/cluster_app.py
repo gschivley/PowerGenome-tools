@@ -66,6 +66,8 @@ class AppState:
         self.custom_tech_groups = {}  # user-editable tech grouping map
         self.available_techs = set()  # techs not currently assigned to a group
         self.current_group = None  # currently selected group in UI
+        self.omit_selected = set()  # technologies to omit (dual-list UI)
+        self.omit_available = set()  # technologies available to include
 
 
 state = AppState()
@@ -1582,6 +1584,13 @@ DEFAULT_TECH_GROUPS = {
     },
 }
 
+DEFAULT_OMIT_TOKENS = {
+    "all other",
+    "flywheel",
+    "solar thermal with energy storage",
+    "solar thermal without energy storage",
+}
+
 
 def clone_group_map(group_map):
     """Shallow clone of group map with set copies."""
@@ -1640,6 +1649,11 @@ def normalize_technology(tech_name, omit_tokens=None):
         return "Offshore Wind Turbine"
     if "wind" in name:
         return "Onshore Wind Turbine"
+    # Ensure solar thermal variants are classified before generic storage/battery
+    if "solar thermal with energy storage" in name:
+        return "Solar Thermal with Energy Storage"
+    if "solar thermal without energy storage" in name:
+        return "Solar Thermal without Energy Storage"
     if "battery" in name or "storage" in name:
         return "Batteries"
     if "petroleum" in name or "oil" in name:
@@ -2489,13 +2503,19 @@ def get_normalized_techs(omit_tokens=None):
 
 
 def get_selected_omit_tokens():
-    """Read omit tokens from the UI multi-select; default if empty."""
-    el = document.getElementById("omitTechSelect")
+    """Return list of technologies currently marked for omission."""
+    # Prefer state cache populated by the dual-list UI
+    if state.omit_selected:
+        return sorted(state.omit_selected)
+
+    selected_el = document.getElementById("omitSelectedList")
     tokens = []
-    if el and hasattr(el, "selectedOptions"):
-        tokens = [opt.value for opt in el.selectedOptions]
+    if selected_el and hasattr(selected_el, "options"):
+        tokens = [opt.value for opt in selected_el.options]
+
     if not tokens:
-        tokens = ["solar thermal", "all other", "flywheel"]
+        tokens = sorted(DEFAULT_OMIT_TOKENS)
+
     return tokens
 
 
@@ -2620,6 +2640,84 @@ def render_group_editor():
         )
 
 
+def render_omit_editor():
+    """Render dual-list UI for selecting omitted technologies."""
+    avail_el = document.getElementById("omitAvailableList")
+    selected_el = document.getElementById("omitSelectedList")
+
+    if state.plants_df is None or (avail_el is None and selected_el is None):
+        return
+
+    # Initialize omit sets if empty
+    if not state.omit_selected and not state.omit_available:
+        all_techs = set(get_normalized_techs(omit_tokens=[]))
+        default_selected = {
+            tech
+            for tech in all_techs
+            if any(tok in tech.lower() for tok in DEFAULT_OMIT_TOKENS)
+        }
+        state.omit_selected = default_selected
+        state.omit_available = all_techs - default_selected
+
+    if avail_el:
+        avail_el.innerHTML = "".join(
+            [
+                f"<option value='{html.escape(tech)}'>{html.escape(tech)}</option>"
+                for tech in sorted(state.omit_available)
+            ]
+        )
+
+    if selected_el:
+        selected_el.innerHTML = "".join(
+            [
+                f"<option value='{html.escape(tech)}'>{html.escape(tech)}</option>"
+                for tech in sorted(state.omit_selected)
+            ]
+        )
+
+
+def on_omit_move_to_selected(event):
+    """Move technologies from available to omitted list."""
+    avail_el = document.getElementById("omitAvailableList")
+    if not avail_el:
+        return
+    chosen = [opt.value for opt in avail_el.selectedOptions]
+    if not chosen:
+        return
+    state.omit_available -= set(chosen)
+    state.omit_selected |= set(chosen)
+    render_omit_editor()
+    refresh_groups_for_omit_change()
+
+
+def on_omit_move_to_available(event):
+    """Move technologies from omitted back to available list."""
+    selected_el = document.getElementById("omitSelectedList")
+    if not selected_el:
+        return
+    chosen = [opt.value for opt in selected_el.selectedOptions]
+    if not chosen:
+        return
+    state.omit_selected -= set(chosen)
+    state.omit_available |= set(chosen)
+    render_omit_editor()
+    refresh_groups_for_omit_change()
+
+
+def on_reset_omit_defaults(event=None):
+    """Reset omitted technologies to defaults."""
+    all_techs = set(get_normalized_techs(omit_tokens=[]))
+    default_selected = {
+        tech
+        for tech in all_techs
+        if any(tok in tech.lower() for tok in DEFAULT_OMIT_TOKENS)
+    }
+    state.omit_selected = default_selected
+    state.omit_available = all_techs - default_selected
+    render_omit_editor()
+    refresh_groups_for_omit_change()
+
+
 def on_add_group(event):
     name_input = document.getElementById("newGroupName")
     omit_tokens = get_selected_omit_tokens()
@@ -2695,6 +2793,11 @@ def refresh_groups_for_omit_change(event=None):
     """Recompute available techs when omit setting changes."""
     omit_tokens = get_selected_omit_tokens()
     normalized = set(get_normalized_techs(omit_tokens=omit_tokens))
+    # Keep omit state in sync with current tech universe
+    all_techs = set(get_normalized_techs(omit_tokens=[]))
+    state.omit_selected = {t for t in state.omit_selected if t in all_techs}
+    state.omit_available = all_techs - state.omit_selected
+    render_omit_editor()
     # Keep existing assignments if still valid
     for group, members in list(state.custom_tech_groups.items()):
         state.custom_tech_groups[group] = {m for m in members if m in normalized}
@@ -2867,8 +2970,14 @@ async def main():
         document.getElementById("groupSelectDual").addEventListener(
             "change", create_proxy(on_group_change)
         )
-        document.getElementById("omitTechSelect").addEventListener(
-            "change", create_proxy(refresh_groups_for_omit_change)
+        document.getElementById("omitMoveToSelectedBtn").addEventListener(
+            "click", create_proxy(on_omit_move_to_selected)
+        )
+        document.getElementById("omitMoveToAvailableBtn").addEventListener(
+            "click", create_proxy(on_omit_move_to_available)
+        )
+        document.getElementById("omitResetBtn").addEventListener(
+            "click", create_proxy(on_reset_omit_defaults)
         )
 
         # Box selection mode buttons
@@ -2891,7 +3000,8 @@ async def main():
         state.map.dragging.disable()
         document.getElementById("map").classList.add("box-select-mode")
 
-        # Initialize grouping editor with defaults
+        # Initialize omit list and grouping editor with defaults
+        render_omit_editor()
         reset_custom_groups(omit_tokens=get_selected_omit_tokens())
 
         # Seed the plant budget with a 15% buffer above the minimum clusters
