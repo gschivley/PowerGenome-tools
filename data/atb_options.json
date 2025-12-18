@@ -1,0 +1,5404 @@
+{
+  "options": [
+    {
+      "data_year": 2023,
+      "technology": "Battery",
+      "tech_detail": "*",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Battery",
+      "tech_detail": "*",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Battery",
+      "tech_detail": "*",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Biopower",
+      "tech_detail": "Dedicated",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Biopower",
+      "tech_detail": "Dedicated",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Biopower",
+      "tech_detail": "Dedicated",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CSP",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "95%-CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "95%-CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "95%-CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "99%-CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "99%-CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "99%-CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "IGCC",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "IGCC",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "IGCC",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "New",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "New",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Coal",
+      "tech_detail": "New",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "CommPV",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSBinary",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSBinary",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSBinary",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSFlash",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSFlash",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSFlash",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "HydroBinary",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "HydroBinary",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "HydroBinary",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "HydroFlash",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "HydroFlash",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "HydroFlash",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSBinary",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSBinary",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSBinary",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSFlash",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSFlash",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSFlash",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NPD8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Hydropower",
+      "tech_detail": "NSD4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC 95% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC 95% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC 95% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC 97% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC 97% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CC 97% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CT",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CT",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "F-Frame CT",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell - 98% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell - 98% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC 95% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC 95% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC 95% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC 97% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC 97% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "NaturalGas",
+      "tech_detail": "H-Frame CC 97% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Nuclear",
+      "tech_detail": "NuclearSMR",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Nuclear",
+      "tech_detail": "NuclearSMR",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class11",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class11",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class11",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class12",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class12",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class12",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class13",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class13",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class13",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class14",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class14",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class14",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass11",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass11",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass11",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass12",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass12",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass12",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass13",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass13",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass13",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass14",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass14",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass14",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass15",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass15",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass15",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "ResPV",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2023,
+      "technology": "UtilityPV",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Biopower",
+      "tech_detail": "Dedicated",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Biopower",
+      "tech_detail": "Dedicated",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Biopower",
+      "tech_detail": "Dedicated",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CSP",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "95%-CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "95%-CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "95%-CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "99%-CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "99%-CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "99%-CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "IGCC",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "IGCC",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "IGCC",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "IGCC-90%-CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "IGCC-90%-CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "IGCC-90%-CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "new",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "new",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Coal",
+      "tech_detail": "new",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "CommPV",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "CommercialScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "LargeScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "MidsizeScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "DistributedWind",
+      "tech_detail": "ResidentialScaleClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSBinary",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSBinary",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSBinary",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSFlash",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSFlash",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "DeepEGSFlash",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "HydroBinary",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "HydroBinary",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "HydroBinary",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "HydroFlash",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "HydroFlash",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "HydroFlash",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSBinary",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSBinary",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSBinary",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSFlash",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSFlash",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Geothermal",
+      "tech_detail": "NFEGSFlash",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NPD8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Hydropower",
+      "tech_detail": "NSD4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "LandbasedWind",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame)",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame)",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame)",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame) 95% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame) 95% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame) 95% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame) 97% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame) 97% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "1-on-1 Combined Cycle (H-Frame) 97% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame)",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame)",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame)",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame) 95% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame) 95% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame) 95% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame) 97% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame) 97% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (F-Frame) 97% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame)",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame)",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame)",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame) 95% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame) 95% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame) 95% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame) 97% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame) 97% CCS",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "2-on-1 Combined Cycle (H-Frame) 97% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Combustion Turbine (F-Frame)",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Combustion Turbine (F-Frame)",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Combustion Turbine (F-Frame)",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell 98% CCS",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "NaturalGas",
+      "tech_detail": "Fuel Cell 98% CCS",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear - Large",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear - Large",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear - Large",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear - Small",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear - Small",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Nuclear",
+      "tech_detail": "Nuclear - Small",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class11",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class11",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class11",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class12",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class12",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class12",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class13",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class13",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class13",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class14",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class14",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class14",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "OffShoreWind",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass11",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass11",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass11",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass12",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass12",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass12",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass13",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass13",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass13",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass14",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass14",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass14",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass15",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass15",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass15",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1ONR",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1ONR",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass1ONR",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3ONR",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3ONR",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass3ONR",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4ONR",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4ONR",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass4ONR",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5ONR",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5ONR",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass5ONR",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Pumped Storage Hydropower",
+      "tech_detail": "NatlClass9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "ResPV",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Utility-Scale Battery Storage",
+      "tech_detail": "Lithium Ion",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Utility-Scale Battery Storage",
+      "tech_detail": "Lithium Ion",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "Utility-Scale Battery Storage",
+      "tech_detail": "Lithium Ion",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class1",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class1",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class1",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class10",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class10",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class10",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class2",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class2",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class2",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class3",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class3",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class3",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class4",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class4",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class4",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class5",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class5",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class5",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class6",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class6",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class6",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class7",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class7",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class7",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class8",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class8",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class8",
+      "cost_case": "Moderate"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class9",
+      "cost_case": "Advanced"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class9",
+      "cost_case": "Conservative"
+    },
+    {
+      "data_year": 2024,
+      "technology": "UtilityPV",
+      "tech_detail": "Class9",
+      "cost_case": "Moderate"
+    }
+  ]
+}
