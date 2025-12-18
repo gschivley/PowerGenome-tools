@@ -355,21 +355,22 @@
         }
 
         .dual-list {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 8px;
-            align-items: center;
         }
 
         .dual-list select {
-            height: 180px;
+            height: 120px;
             width: 100%;
         }
 
         .dual-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            flex-direction: row;
+            justify-content: center;
+            gap: 12px;
+            margin: 4px 0;
         }
 
         .small-btn {
@@ -754,10 +755,10 @@
                                 <select id="availableList" multiple></select>
                             </div>
                             <div class="dual-buttons">
-                                <button class="btn btn-secondary small-btn" id="moveToGroupBtn"
-                                    type="button">&gt;&gt;</button>
-                                <button class="btn btn-secondary small-btn" id="moveToAvailableBtn"
-                                    type="button">&lt;&lt;</button>
+                                <button class="btn btn-secondary small-btn" id="moveToGroupBtn" type="button">Add
+                                    ↓</button>
+                                <button class="btn btn-secondary small-btn" id="moveToAvailableBtn" type="button">Remove
+                                    ↑</button>
                             </div>
                             <div>
                                 <div style="font-size: 12px; margin-bottom: 4px;">In selected group</div>
@@ -774,10 +775,10 @@
                             <select id="omitAvailableList" multiple size="8"></select>
                         </div>
                         <div class="dual-buttons">
-                            <button class="btn btn-secondary small-btn" id="omitMoveToSelectedBtn"
-                                type="button">&gt;&gt;</button>
+                            <button class="btn btn-secondary small-btn" id="omitMoveToSelectedBtn" type="button">Omit
+                                ↓</button>
                             <button class="btn btn-secondary small-btn" id="omitMoveToAvailableBtn"
-                                type="button">&lt;&lt;</button>
+                                type="button">Include ↑</button>
                         </div>
                         <div>
                             <div style="font-size: 12px; margin-bottom: 4px;">Omitted technologies</div>
