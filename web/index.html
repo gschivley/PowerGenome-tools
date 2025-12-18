@@ -48,6 +48,27 @@
             border-right: 1px solid #ddd;
             overflow-y: auto;
             background: #fafafa;
+            position: relative;
+        }
+
+        #sidebarResizer {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 10;
+        }
+
+        #sidebarResizer:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        body.resizing {
+            cursor: col-resize;
+            user-select: none;
         }
 
         #sidebar h2 {
@@ -479,6 +500,7 @@
 
     <div id="app">
         <div id="sidebar">
+            <div id="sidebarResizer" title="Drag to resize sidebar"></div>
             <h2>⚡ PowerGenome Clustering</h2>
             <div style="margin-bottom: 16px; font-size: 13px;">
                 <a href="https://gschivley.github.io/PowerGenome-tools/" target="_blank"
@@ -488,6 +510,7 @@
             <div class="tab-bar">
                 <button class="tab-btn active" id="regionTabBtn" data-tab="regionTab">Regions</button>
                 <button class="tab-btn" id="plantTabBtn" data-tab="plantTab">Plants</button>
+                <button class="tab-btn" id="settingsTabBtn" data-tab="settingsTab">Settings</button>
             </div>
 
             <div id="statusBox" class="status info">Click BAs on the map to select them for clustering.</div>
@@ -566,7 +589,60 @@
                         document.getElementById('autoOptimize').addEventListener('change', toggleAutoOptimize);
                         document.getElementById('regionTabBtn').addEventListener('click', () => switchTab('regionTab'));
                         document.getElementById('plantTabBtn').addEventListener('click', () => switchTab('plantTab'));
+                        document.getElementById('settingsTabBtn').addEventListener('click', () => switchTab('settingsTab'));
                     });
+                </script>
+
+                <script>
+                    (function () {
+                        const app = document.getElementById('app');
+                        const sidebar = document.getElementById('sidebar');
+                        const resizer = document.getElementById('sidebarResizer');
+                        if (!app || !sidebar || !resizer) return;
+
+                        const MIN_W = 260;
+                        const MAX_W = 700;
+
+                        let startX = 0;
+                        let startW = 0;
+                        let dragging = false;
+
+                        function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+                        function setSidebarWidth(px) {
+                            app.style.gridTemplateColumns = `${px}px 1fr`;
+                            // Encourage Leaflet to recalc size
+                            window.dispatchEvent(new Event('resize'));
+                            if (window.appMap && typeof window.appMap.invalidateSize === 'function') {
+                                window.appMap.invalidateSize(false);
+                            }
+                        }
+
+                        resizer.addEventListener('mousedown', (e) => {
+                            dragging = true;
+                            startX = e.clientX;
+                            startW = sidebar.getBoundingClientRect().width;
+                            document.body.classList.add('resizing');
+                            e.preventDefault();
+                        });
+
+                        window.addEventListener('mousemove', (e) => {
+                            if (!dragging) return;
+                            const dx = e.clientX - startX;
+                            const w = clamp(Math.round(startW + dx), MIN_W, MAX_W);
+                            setSidebarWidth(w);
+                        });
+
+                        window.addEventListener('mouseup', () => {
+                            if (!dragging) return;
+                            dragging = false;
+                            document.body.classList.remove('resizing');
+                            // One more invalidate at end
+                            if (window.appMap && typeof window.appMap.invalidateSize === 'function') {
+                                window.appMap.invalidateSize(false);
+                            }
+                        });
+                    })();
                 </script>
 
                 <div class="section">
@@ -828,6 +904,242 @@
                     <div id="plantCandidateList" class="ba-list">
                         <em>Run plant clustering to see suggestions.</em>
                     </div>
+                </div>
+            </div>
+
+            <div id="settingsTab" class="tab-content">
+                <div class="section">
+                    <div style="font-size: 13px; color: #444;">
+                        Generate PowerGenome settings YAMLs using your region aggregations and clustering choices.
+                        Run region clustering first to populate <em>model_regions</em> and <em>region_aggregations</em>.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <label>Model Definition</label>
+                    <label style="font-size: 12px; margin-top: 8px;">Target USD Year</label>
+                    <input id="targetUsdYear" type="number" value="2024" min="1900" max="2100" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">UTC Offset</label>
+                    <input id="utcOffset" type="number" value="-5" min="-12" max="14" step="1" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">Model Years (comma-separated)</label>
+                    <input id="modelYears" type="text" value="2030" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">First Planning Years (comma-separated)</label>
+                    <input id="planningYears" type="text" value="2025" />
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        Provide the same number of values for model years and first planning years.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <label>Fuels (Baseline)</label>
+                    <label style="font-size: 12px;">Fuel Data Year</label>
+                    <select id="fuelDataYear"></select>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        Uses standard fuels (coal, naturalgas, distillate, uranium). New fuels can be added when
+                        creating modified resources.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <label>Fuel Scenarios</label>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+                        Scenario options come from PowerGenome-data fuel_prices.csv for the selected Fuel Data Year.
+                        Defaults: coal uses <em>no_111d</em> when available, otherwise <em>reference</em>; all other
+                        fuels default to <em>reference</em>.
+                    </div>
+
+                    <label style="font-size: 12px;">Coal</label>
+                    <select id="fuelScenarioCoal"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Natural gas</label>
+                    <select id="fuelScenarioNaturalGas"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Distillate</label>
+                    <select id="fuelScenarioDistillate"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Uranium</label>
+                    <select id="fuelScenarioUranium"></select>
+
+                    <div id="fuelScenarioHelp" style="font-size: 11px; color: #666; margin-top: 6px;"></div>
+                </div>
+
+                <div class="section">
+                    <label>New-build Resources</label>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+                        Options load from ATB index (if available). You can still add resources manually.
+                    </div>
+
+                    <label style="font-size: 12px;">ATB Data Year</label>
+                    <select id="atbYearSelect"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Technology</label>
+                    <select id="atbTechSelect"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Tech Detail</label>
+                    <select id="atbTechDetailSelect"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Cost Case</label>
+                    <select id="atbCostCaseSelect"></select>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Size (MW)</label>
+                    <input id="atbSizeMw" type="number" value="1" min="1" step="1" />
+
+                    <button class="btn btn-secondary" id="addNewResourceBtn" type="button">Add New-build
+                        Resource</button>
+
+                    <div id="newResourcesList" class="ba-list" style="margin-top: 8px;">
+                        <em>No new-build resources selected yet.</em>
+                    </div>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Manual new_resources (one per line)</label>
+                    <textarea id="newResourcesRaw"
+                        style="width: 100%; height: 90px; font-family: monospace; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; padding: 8px;"
+                        placeholder="Example: NaturalGas | 1-on-1 Combined Cycle (H-Frame) | Moderate | 500"></textarea>
+                </div>
+
+                <div class="section">
+                    <label>Modified New Resources</label>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+                        Creates entries under <code>modified_new_resources</code>. You will be asked to define the fuel
+                        and resource class tags.
+                    </div>
+
+                    <label style="font-size: 12px;">Name (key)</label>
+                    <input id="modResName" type="text" placeholder="e.g., hydrogen_turbine" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">Copy from: Technology</label>
+                    <input id="modBaseTech" type="text" placeholder="e.g., NaturalGas" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">Copy from: Tech Detail</label>
+                    <input id="modBaseTechDetail" type="text" placeholder="e.g., 1-on-1 Combined Cycle (H-Frame)" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">Copy from: Cost Case</label>
+                    <input id="modBaseCostCase" type="text" placeholder="e.g., Moderate" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">Copy from: Size (MW)</label>
+                    <input id="modBaseSizeMw" type="number" value="100" min="1" step="1" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">New: Technology</label>
+                    <input id="modNewTech" type="text" placeholder="e.g., hydrogen" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">New: Tech Detail</label>
+                    <input id="modNewTechDetail" type="text" placeholder="e.g., 1-on-1 Combined Cycle (H-Frame)" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">New: Cost Case</label>
+                    <input id="modNewCostCase" type="text" placeholder="e.g., Moderate" />
+
+                    <label style="font-size: 12px; margin-top: 8px;">Attribute modifiers (optional)</label>
+                    <textarea id="modAttrModifiers"
+                        style="width: 100%; height: 110px; font-family: monospace; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; padding: 8px;"
+                        placeholder="Example:
+capex_mw: [add, 116000]
+heat_rate: [add, 0.365]
+fixed_o_m_mw: [add, 9670]
+variable_o_m_mwh: [mul, 1.076]
+wacc_real: 0.05"></textarea>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        YAML mapping applied under <code>modified_new_resources</code> for this entry.
+                    </div>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Fuel Type</label>
+                    <select id="modFuelType">
+                        <option value="standard" selected>Standard fuel</option>
+                        <option value="new">New fuel</option>
+                    </select>
+
+                    <div id="modStandardFuelRow" style="margin-top: 8px;">
+                        <label style="font-size: 12px;">Standard Fuel</label>
+                        <select id="modStandardFuel">
+                            <option value="naturalgas" selected>naturalgas</option>
+                            <option value="coal">coal</option>
+                            <option value="distillate">distillate</option>
+                            <option value="uranium">uranium</option>
+                        </select>
+                    </div>
+
+                    <div id="modNewFuelRow" style="display:none; margin-top: 8px;">
+                        <label style="font-size: 12px;">New Fuel Name</label>
+                        <input id="modNewFuelName" type="text" placeholder="e.g., hydrogen" />
+
+                        <label style="font-size: 12px; margin-top: 8px;">Fuel Price ($/MMBtu)</label>
+                        <input id="modNewFuelPrice" type="number" value="16" min="0" step="0.01" />
+
+                        <label style="font-size: 12px; margin-top: 8px;">Emission Factor (metric ton CO₂/MMBtu)</label>
+                        <input id="modNewFuelEf" type="number" value="0" min="0" step="0.00001" />
+                    </div>
+
+                    <label style="font-size: 12px; margin-top: 8px;">Resource Class</label>
+                    <select id="modTagClass">
+                        <option value="THERM" selected>THERM</option>
+                        <option value="HYDRO">HYDRO</option>
+                        <option value="MUST_RUN">MUST_RUN</option>
+                        <option value="VRE">VRE</option>
+                        <option value="STOR">STOR</option>
+                        <option value="LDS">LDS</option>
+                    </select>
+
+                    <div id="modCommitRow" style="margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                            <input type="checkbox" id="modIsCommit" style="width: auto; margin: 0;" checked>
+                            Also Commit (only relevant for THERM)
+                        </label>
+                    </div>
+
+                    <button class="btn btn-secondary" id="addModifiedResourceBtn" type="button">Add Modified
+                        Resource</button>
+                    <button class="btn btn-secondary" id="clearModifiedResourcesBtn" type="button">Clear Modified
+                        Resources</button>
+
+                    <div id="modifiedResourcesList" class="ba-list" style="margin-top: 8px;">
+                        <em>No modified resources added yet.</em>
+                    </div>
+
+                    <script>
+                        function toggleModFuelType() {
+                            const sel = document.getElementById('modFuelType');
+                            const standardRow = document.getElementById('modStandardFuelRow');
+                            const newRow = document.getElementById('modNewFuelRow');
+                            if (!sel || !standardRow || !newRow) return;
+                            if (sel.value === 'new') {
+                                standardRow.style.display = 'none';
+                                newRow.style.display = 'block';
+                            } else {
+                                standardRow.style.display = 'block';
+                                newRow.style.display = 'none';
+                            }
+                        }
+
+                        function toggleCommitRow() {
+                            const cls = document.getElementById('modTagClass');
+                            const row = document.getElementById('modCommitRow');
+                            if (!cls || !row) return;
+                            row.style.display = (cls.value === 'THERM') ? 'block' : 'none';
+                        }
+
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const fuelType = document.getElementById('modFuelType');
+                            const cls = document.getElementById('modTagClass');
+                            if (fuelType) fuelType.addEventListener('change', toggleModFuelType);
+                            if (cls) cls.addEventListener('change', toggleCommitRow);
+                            toggleModFuelType();
+                            toggleCommitRow();
+                        });
+                    </script>
+                </div>
+
+                <div class="section">
+                    <button class="btn btn-primary" id="generateSettingsBtn" type="button">Generate Settings
+                        YAMLs</button>
+                    <div style="display:flex; gap: 8px; align-items: center; margin-top: 8px;">
+                        <select id="settingsFileSelect" style="flex: 1;"></select>
+                        <button class="btn btn-secondary" id="downloadSettingsFileBtn" type="button">Download</button>
+                    </div>
+                    <textarea id="settingsYamlOut" readonly
+                        style="margin-top: 8px; width: 100%; height: 220px; font-family: monospace; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; padding: 8px;"
+                        placeholder="Generate settings to preview YAML..."></textarea>
                 </div>
             </div>
         </div>
