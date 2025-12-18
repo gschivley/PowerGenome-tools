@@ -35,10 +35,11 @@ The **Grouping Column** determines how BAs are initially partitioned before clus
 
 | Option | Groups | Details | Strengths | Weaknesses | Best For |
 |--------|--------|---------|-----------|-----------|----------|
-| **Transmission Group** | 50–65 | 2–5 BAs per group | More balanced regions; aligns with ISOs/RTOs; better convergence | None significant | Most general analyses; grid-operational alignment |
-| **Transmission Region** | 10–15 | ~10 BAs per group | Still grid-aligned; moderate flexibility | Fewer initial groups → fewer final regions | Broader transmission boundaries |
-| **Interconnect** | 3 | ~45 BAs per group | — | Highly imbalanced regions; misses operational detail | Rarely used |
-| **State / Census Division** | 50–10 | Political subdivisions | — | Doesn't reflect grid ops; splits transmission clusters | State-level policy only |
+| **Transmission Group** | 18 | ~7 BAs per group (median 6) | More balanced regions; aligns with ISOs/RTOs; better convergence | None significant | Most general analyses; grid-operational alignment |
+| **Transmission Region** | 11 | ~12 BAs per group (median 11) | Still grid-aligned; moderate flexibility | Large NorthernGrid group in WECC can lead to unbalanced regions in national studies | Broader transmission boundaries |
+| **Interconnect** | 3 | ~45 BAs per group (median 35) | None noted | Highly imbalanced regions; misses operational detail | Rarely used |
+| **Census Division** | 9 | ~15 BAs per group (median 17) | Regional policy rollups | Doesn't reflect grid ops; splits transmission clusters | High-level regional summaries |
+| **State** | 48 | ~3 BAs per group (median 2) | Aligns to state policy boundaries | Doesn't reflect grid ops; splits transmission clusters | State-level policy analysis |
 
 **Recommendation**: Use **Transmission Group** (default) or **Transmission Region** for grid-focused analyses. These options respect ISO/RTO boundaries that reflect how the grid is actually operated and studied.
 
@@ -62,7 +63,7 @@ Once you've selected a grouping column, you need to decide how many regions you 
 * You specify exactly how many model regions you want.
 * The clustering algorithm works to achieve that target.
 * **Advantage**: Direct control; use this when your computational constraints or project requirements specify a fixed region count.
-* **Disadvantage**: You may override the network's natural divisions, potentially creating inefficient aggregations.
+* **Disadvantage**: You may override the network's natural divisions, potentially creating inefficient aggregations or unbalanced regions.
 
 **Best for**: Production models where region count is a hard constraint, or when you're matching a predetermined regional structure.
 
@@ -82,14 +83,14 @@ Once you've selected a grouping column, you need to decide how many regions you 
 
 1. Start with **Transmission Group** grouping.
 2. Enable **Auto-Optimize** with a reasonable range (e.g., 15–40 regions).
-3. Select **Spectral** or **Louvain** algorithm.
+3. Try switching to a fixed number of regions. Select **Spectral** or **Louvain** algorithm.
 4. Review the resulting regions and modularity score. Experiment with different ranges to see how modularity changes.
 
 **For balanced, fixed-region models**:
 
 1. Use **Transmission Group** grouping.
 2. Set a **Fixed Target** (e.g., 20 regions).
-3. Select **Hierarchical Clustering (Average Linkage)** for evenly-sized regions.
+3. Select **Spectral**, **Louvain**, or **Hierarchical Clustering (Average Linkage)** to explore how region clustering varies.
 
 **If auto-optimize produces too many or too few regions**:
 
