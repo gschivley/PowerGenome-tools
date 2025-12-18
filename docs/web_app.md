@@ -34,7 +34,7 @@ Selecting the right grouping column and clustering algorithm is essential for pr
 The **Grouping Column** determines how BAs are initially partitioned before clustering. This choice significantly influences region balance and grid operational fidelity.
 
 | Option | Groups | Details | Strengths | Weaknesses | Best For |
-|--------|--------|---------|-----------|-----------|----------|
+| -------- | -------- | --------- | ----------- | ----------- | ---------- |
 | **Transmission Group** | 18 | ~7 BAs per group (median 6) | More balanced regions; aligns with ISOs/RTOs; better convergence | None significant | Most general analyses; grid-operational alignment |
 | **Transmission Region** | 11 | ~12 BAs per group (median 11) | Still grid-aligned; moderate flexibility | Large NorthernGrid group in WECC can lead to unbalanced regions in national studies | Broader transmission boundaries |
 | **Interconnect** | 3 | ~45 BAs per group (median 35) | None noted | Highly imbalanced regions; misses operational detail | Rarely used |
@@ -70,7 +70,7 @@ Once you've selected a grouping column, you need to decide how many regions you 
 #### Algorithm Choices
 
 | Algorithm | How It Works | Strengths | Weaknesses | Best For |
-|-----------|--------------|-----------|-----------|----------|
+| ----------- | -------------- | ----------- | ----------- | ---------- |
 | **Spectral Clustering** (Default) | Uses eigenvalues of transmission graph for dimensionality reduction | Balanced regions; finds cuts minimizing flow disruption; works well with grouping constraints | — | Default choice for most analyses |
 | **Louvain Community Detection** | Iteratively merges to maximize modularity | Effective in auto-optimize; finds natural network structure; identifies cohesive communities | Less coherent in fixed-target mode | Auto-optimize mode; exploratory analysis |
 | **Hierarchical (Average Linkage)** | Greedy merging by edge weight, penalizing large cluster merges | Produces balanced region sizes; predictable; deterministic | — | Fixed-target mode; balanced regions needed |
@@ -113,20 +113,119 @@ Once you've selected a grouping column, you need to decide how many regions you 
 !!! tip
     Plant clustering respects the model regions created in the Regions tab. If you haven't run region clustering yet, plants are grouped by their BA. The system uses heat rate variability and capacity to suggest clusters; larger, more varied generator fleets get more clusters when budget allows.
 
+## Settings YAML Generation
+
+The **Settings** tab generates most of the YAML settings files you need to run PowerGenome using the regions and (optionally) plant clusters created in this app.
+
+### What Files It Can Generate
+
+The app generates these files (matching the example naming convention in `settings_examples/`):
+
+* `model_definition.yml`
+* `resources.yml`
+* `fuels.yml`
+* `transmission.yml`
+* `distributed_gen.yml`
+* `resource_tags.yml`
+* `startup_costs.yml`
+
+The app intentionally **does not generate** these files:
+
+* `data.yml`
+* `scenario_management.yml`
+* `time_clustering.yml`
+* `extra_inputs.yml`
+* `demand.yml`
+
+### Recommended Workflow
+
+1. Run **Region Clustering** and export the regions YAML.
+2. (Optional) Run **Plant Clustering** and export the plant clusters YAML.
+3. Go to the **Settings** tab, review inputs, and click **Generate Settings YAMLs**.
+4. Use the file dropdown to preview each settings file, then **Download**.
+
+!!! note
+    `model_definition.yml` and several downstream defaults require region aggregations.
+    If you haven't clustered regions yet, Settings generation will prompt you to do so.
+
+### Model Definition
+
+The **Model Definition** section controls fields commonly used in `model_definition.yml`:
+
+* **Target USD year** (e.g., 2024)
+* **UTC offset**
+* **Model years** and **First planning years** (comma-separated lists; must be the same length)
+
+### Fuels and Fuel Scenarios
+
+The **Fuel Data Year** dropdown is populated from scenario data in:
+
+* [PowerGenome-data fuel_prices.csv](https://github.com/gschivley/PowerGenome-data/blob/main/data/fuel_prices.csv)
+
+Fuel scenarios are selectable per fuel (coal, natural gas, distillate, uranium) for the selected data year.
+
+Defaults:
+
+* If **`no_111d`** is available for **coal** in the selected fuel data year, coal defaults to `no_111d`.
+* Otherwise coal defaults to `reference`.
+* All other fuels default to `reference`.
+
+!!! tip
+    If fuel scenario options can’t be loaded (for example, offline use), the app falls back to `reference` for all fuels.
+
+### New-build Resources
+
+The **New-build Resources** section builds the `new_resources` list used in `resources.yml`.
+
+* If an ATB options index is available, you can use dropdowns to pick:
+    **ATB data year → technology → tech detail → cost case**, then specify **size (MW)**.
+* You can also paste resources manually, one per line:
+
+    Technology | Tech Detail | Cost Case | Size
+
+!!! note
+    The web app reads an index file at `web/data/atb_options.json` (not the full Parquet) to keep the app lightweight.
+    If you need a complete ATB option list, regenerate that JSON offline from `technology_costs_atb.parquet`.
+
+### Modified New Resources
+
+The **Modified New Resources** section creates entries under `modified_new_resources` in `resources.yml` and also updates:
+
+* `fuels.yml` (fuel mapping and optional new-fuel definitions)
+* `resource_tags.yml` (tag class selection and optional `Commit` tag for thermal resources)
+
+You can define:
+
+* A **base ATB resource** (technology/detail/cost case/size)
+* A **new resource identity** (new technology/detail/cost case)
+* A **fuel type**:
+  * **Standard fuel** (coal/naturalgas/distillate/uranium)
+  * **New fuel** (enter a fuel name, price $/MMBtu, and emission factor in metric ton CO₂/MMBtu)
+* A **resource class tag** (THERM/VRE/STOR/etc.)
+* **Also Commit** (only relevant for THERM)
+* Optional **attribute modifiers** as a YAML mapping (merged into the modified resource entry)
+
+### Generate, Preview, Download
+
+After clicking **Generate Settings YAMLs**:
+
+* Use the dropdown to choose which file to preview.
+* Click **Download** to save that YAML file.
+
+!!! note
+    These generated YAMLs are intended as a starting point and mirror the app’s defaults.
+    You can always edit them further in your PowerGenome settings folder.
+
 ## Running Locally
 
 Since the app uses PyScript and fetches local data files, it must be served via a local HTTP server to avoid CORS errors.
 
 1. Navigate to the `web` directory:
 
-    ```bash
     cd web
-    ```
 
 2. Start a simple Python server:
 
-    ```bash
     python -m http.server 8000
-    ```
 
 3. Open your browser to `http://localhost:8000`.
