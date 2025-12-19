@@ -620,6 +620,7 @@
 
         /* Responsive layout for smaller screens */
         @media (max-width: 768px) {
+
             .button-group,
             .button-group-with-input {
                 flex-direction: column;
@@ -664,7 +665,8 @@
             <div class="nav-step" onclick="goToStep(3)">3. Existing Plants</div>
             <div class="nav-step" onclick="goToStep(4)">4. New Resources</div>
             <div class="nav-step" onclick="goToStep(5)">5. Fuels</div>
-            <div class="nav-step" onclick="goToStep(6)">6. Export</div>
+            <div class="nav-step" onclick="goToStep(6)">6. ESR Policies</div>
+            <div class="nav-step" onclick="goToStep(7)">7. Export</div>
         </div>
         <div style="font-size: 12px;">
             <a href="https://gschivley.github.io/PowerGenome-tools/" target="_blank"
@@ -682,7 +684,8 @@
                     <div id="statusBox" class="status info">Click BAs on the map to select them for clustering.</div>
 
                     <div class="instructions">
-                        <div class="instructions-header" onclick="toggleCollapsible('instructionsContent', 'instructionsToggle')">
+                        <div class="instructions-header"
+                            onclick="toggleCollapsible('instructionsContent', 'instructionsToggle')">
                             <span>📖 How to Use</span>
                             <span class="instructions-toggle" id="instructionsToggle">▶ Show</span>
                         </div>
@@ -724,6 +727,16 @@
                             <option value="st">st (State)</option>
                             <option value="cendiv">cendiv (Census Division)</option>
                         </select>
+                    </div>
+
+                    <div class="section">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="esrCompatibleClustering" style="width: auto; margin: 0;">
+                            ESR-compatible clustering
+                        </label>
+                        <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                            Ensures all BAs in a region can trade within the same ESR zone
+                        </div>
                     </div>
 
                     <div class="section">
@@ -875,7 +888,8 @@
                 </div>
 
                 <div class="instructions">
-                    <div class="instructions-header" onclick="toggleCollapsible('plantInstructionsContent', 'plantInstructionsToggle')">
+                    <div class="instructions-header"
+                        onclick="toggleCollapsible('plantInstructionsContent', 'plantInstructionsToggle')">
                         <span>📖 How to Use</span>
                         <span class="instructions-toggle" id="plantInstructionsToggle">▶ Show</span>
                     </div>
@@ -1229,8 +1243,106 @@ wacc_real: 0.05"></textarea>
             </div>
         </div>
 
-        <!-- Step 6: Export -->
+        <!-- Step 6: ESR Policies -->
         <div id="step-6" class="step-pane">
+            <div class="centered-step">
+                <div class="step-header">
+                    <h2>ESR Policies (Optional)</h2>
+                </div>
+
+                <div class="instructions">
+                    <div class="instructions-header"
+                        onclick="toggleCollapsible('esrInstructionsContent', 'esrInstructionsToggle')">
+                        <span>📖 How to Use</span>
+                        <span class="instructions-toggle" id="esrInstructionsToggle">▶ Show</span>
+                    </div>
+                    <div class="instructions-content hidden" id="esrInstructionsContent">
+                        <ol>
+                            <li><strong>Overview:</strong> Energy Share Requirements (ESR) define minimum percentages of
+                                demand that must be met by qualifying resources in specific regions.</li>
+                            <li><strong>RPS vs. CES:</strong> RPS (Renewable Portfolio Standard) requires renewable
+                                energy; CES (Clean Energy Standard) allows renewables plus nuclear and other clean
+                                technologies.</li>
+                            <li><strong>Trading zones:</strong> The app automatically groups your model regions into
+                                trading zones based on state trading rules in <code>rectable.csv</code>. Each zone gets
+                                its own ESR constraints.</li>
+                            <li><strong>Technology qualification:</strong> Technologies are matched against
+                                <code>allowed_techs.csv</code> to determine which can satisfy each ESR type.</li>
+                            <li><strong>Optional step:</strong> If you do not need ESR policies, uncheck "Include ESR
+                                policies" and skip to Export.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="esrIncludeCheckbox" style="width: auto; margin: 0;" checked>
+                        Include ESR policies
+                    </label>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        Uncheck to skip ESR generation and proceed to export.
+                    </div>
+                </div>
+
+                <div id="esrContent" style="display: block;">
+                    <div class="section">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="esrIncludeRPS" style="width: auto; margin: 0;" checked>
+                            Include RPS constraints
+                        </label>
+                    </div>
+
+                    <div class="section">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="esrIncludeCES" style="width: auto; margin: 0;" checked>
+                        </label>
+                        Include CES constraints
+                    </div>
+
+                    <div class="section">
+                        <button class="btn btn-primary" id="runESRBtn">Analyze ESR Zones</button>
+                    </div>
+
+                    <div id="esrResultText" class="status info" style="display: none;">ESR analysis pending.</div>
+
+                    <div class="section">
+                        <label>RPS-Qualified Technologies</label>
+                        <div id="esrRPSTechList" class="ba-list">
+                            <em>Run analysis to see results.</em>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <label>CES-Qualified Technologies</label>
+                        <div id="esrCESTechList" class="ba-list">
+                            <em>Run analysis to see results.</em>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <label>ESR Zones</label>
+                        <div id="esrZonesList" class="ba-list">
+                            <em>Run analysis to see zones.</em>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <label>Emission Policies Preview</label>
+                        <textarea id="esrCsvPreview" readonly
+                            style="width: 100%; height: 150px; font-family: monospace; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; padding: 8px;"
+                            placeholder="Run analysis to preview emission_policies.csv..."></textarea>
+                    </div>
+                </div>
+
+                <div class="step-footer">
+                    <button class="btn btn-secondary" onclick="goToStep(5)">&larr; Back</button>
+                    <button class="btn btn-primary" onclick="goToStep(7)">Next: Export &rarr;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Export -->
+        <div id="step-7" class="step-pane">
             <div class="centered-step">
                 <div class="step-header">
                     <h2>Export Settings</h2>
@@ -1249,7 +1361,7 @@ wacc_real: 0.05"></textarea>
                 </div>
 
                 <div class="step-footer">
-                    <button class="btn btn-secondary" onclick="goToStep(5)">&larr; Back</button>
+                    <button class="btn btn-secondary" onclick="goToStep(6)">&larr; Back</button>
                     <div></div>
                 </div>
             </div>
@@ -1296,6 +1408,13 @@ wacc_real: 0.05"></textarea>
                         window.appMap.invalidateSize(false);
                     }
                 }, 100);
+            }
+
+            // ESR step: load data on first access
+            if (stepNum === 6) {
+                if (window.loadESRDataOnDemand) {
+                    window.loadESRDataOnDemand();
+                }
             }
         }
 

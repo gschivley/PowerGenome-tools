@@ -84,8 +84,386 @@ class AppState:
         self.fuel_prices_df = None  # fuel price scenarios from PowerGenome-data
         self.fuel_scenario_index = {}  # data_year -> fuel -> sorted(list(scenario))
 
+        # ESR (Energy Share Requirements) data
+        self.rps_df = None  # RPS policy data
+        self.ces_df = None  # CES policy data
+        self.rectable_df = None  # State trading rules
+        self.pop_fraction_df = None  # Population fractions for BA/state
+        self.allowed_techs_df = None  # Allowed techs for RPS/CES
+        # ============================================================================
+        # ESR Generator (Energy Share Requirements)
+        # ============================================================================
+
+        self.esr_zones = None  # Computed ESR zones
+        self.esr_map = None  # ESR constraint name -> regions mapping
+        self.emission_policies_df = None  # Generated emission_policies.csv
+
 
 state = AppState()
+
+
+# ============================================================================
+# ESR Generator Functions (Energy Share Requirements)
+# ============================================================================
+
+
+class ESRGenerationError(Exception):
+    """Raised when ESR generation is not possible with the given region configuration."""
+
+    pass
+
+
+def extract_state_for_region(region_bas, hierarchy_df):
+    """Extract states for each BA in a model region."""
+    ba_to_state = {}
+    for ba in region_bas:
+        row = hierarchy_df[hierarchy_df["ba"] == ba]
+        if row.empty:
+            raise ESRGenerationError(f"BA '{ba}' not found in hierarchy data")
+        state_val = str(row.iloc[0]["st"]).lower()
+        ba_to_state[ba] = state_val
+    return ba_to_state
+
+
+def get_states_in_region(region_bas, hierarchy_df):
+    """Get unique states in a model region."""
+    ba_to_state = extract_state_for_region(region_bas, hierarchy_df)
+    return set(ba_to_state.values())
+
+
+def split_bas_by_trading_zones(bas, hierarchy_df, rectable_df):
+    """Split a set of BAs into groups where all states in each group can trade transitively.
+
+    Returns a list of sets, where each set contains BAs whose states form a connected
+    trading component. BAs in different sets cannot be clustered together.
+    """
+    if rectable_df is None or len(bas) <= 1:
+        return [set(bas)]
+
+    # Build BA to state mapping
+    ba_to_state = {}
+    for ba in bas:
+        row = hierarchy_df[hierarchy_df["ba"] == ba]
+        if not row.empty:
+            ba_to_state[ba] = str(row.iloc[0]["st"]).lower()
+
+    # Get unique states
+    states = set(ba_to_state.values())
+    if len(states) <= 1:
+        return [set(bas)]
+
+    states_list = list(states)
+
+    # Build a graph of direct trading relationships between states
+    trading_graph = {s: set() for s in states_list}
+    for i, s1 in enumerate(states_list):
+        for s2 in states_list[i + 1 :]:
+            if can_states_trade(s1, s2, rectable_df):
+                trading_graph[s1].add(s2)
+                trading_graph[s2].add(s1)
+
+    # Find connected components (trading zones)
+    visited = set()
+    trading_zones = []
+
+    def dfs(state, zone):
+        visited.add(state)
+        zone.add(state)
+        for neighbor in trading_graph[state]:
+            if neighbor not in visited:
+                dfs(neighbor, zone)
+
+    for state in states_list:
+        if state not in visited:
+            zone = set()
+            dfs(state, zone)
+            trading_zones.append(zone)
+
+    # If all states are in one trading zone, no split needed
+    if len(trading_zones) == 1:
+        return [set(bas)]
+
+    # Group BAs by their trading zone
+    ba_groups = []
+    for zone in trading_zones:
+        group = {ba for ba, st in ba_to_state.items() if st in zone}
+        if group:
+            ba_groups.append(group)
+
+    return ba_groups
+
+
+def can_states_trade(state1, state2, rectable_df):
+    """Check if two states can trade REC/ESR credits based on rectable.csv."""
+    state1_upper = state1.upper()
+    state2_upper = state2.upper()
+    if state1_upper not in rectable_df.index or state2_upper not in rectable_df.columns:
+        return False
+    value = rectable_df.loc[state1_upper, state2_upper]
+    return pd.notna(value) and float(value) > 0
+
+
+def can_states_trade_transitively(states_set, rectable_df):
+    """Check if all states in a set can trade with each other transitively.
+
+    States can be in the same zone if they're all connected through trading partners.
+    For example, if A trades with C and B trades with C, then A and B can be in the same zone.
+    """
+    if len(states_set) <= 1:
+        return True
+
+    states_list = list(states_set)
+
+    # Build a graph of direct trading relationships
+    trading_graph = {s: set() for s in states_list}
+    for i, s1 in enumerate(states_list):
+        for s2 in states_list[i + 1 :]:
+            if can_states_trade(s1, s2, rectable_df):
+                trading_graph[s1].add(s2)
+                trading_graph[s2].add(s1)
+
+    # Check if all states are in the same connected component
+    visited = set()
+
+    def dfs(state):
+        visited.add(state)
+        for neighbor in trading_graph[state]:
+            if neighbor not in visited:
+                dfs(neighbor)
+
+    dfs(states_list[0])
+    return len(visited) == len(states_list)
+
+
+def build_esr_zones(region_aggregations, hierarchy_df, rectable_df):
+    """Infer ESR zones (groups of regions that can trade with each other).
+
+    Each ESR zone represents a group of regions that can all participate in
+    the same REC/credit trading market. Regions are placed in separate zones
+    if they cannot trade with each other.
+
+    If a region contains states that cannot trade transitively, it is split
+    into sub-regions for ESR purposes.
+
+    Returns:
+        (zones, expanded_region_aggregations): zones is a list of lists of region names,
+        expanded_region_aggregations is a dict mapping region names to BA lists
+        (including any _esr1, _esr2 split regions)
+    """
+    # First, handle regions with non-trading states by splitting them
+    expanded_region_aggregations = {}
+    for region_name, region_bas in region_aggregations.items():
+        # Check if this region needs to be split
+        trading_subgroups = split_bas_by_trading_zones(
+            region_bas, hierarchy_df, rectable_df
+        )
+        if len(trading_subgroups) == 1:
+            # No split needed
+            expanded_region_aggregations[region_name] = region_bas
+        else:
+            # Split into sub-regions for ESR purposes
+            for i, subgroup in enumerate(trading_subgroups):
+                sub_name = f"{region_name}_esr{i+1}"
+                expanded_region_aggregations[sub_name] = list(subgroup)
+
+    # Build zones by grouping regions that can ALL trade with each other
+    # Each region gets its own zone initially, then we try to merge compatible zones
+    regions = list(expanded_region_aggregations.keys())
+
+    # Get states for each region
+    region_states = {}
+    for region in regions:
+        region_states[region] = get_states_in_region(
+            expanded_region_aggregations[region], hierarchy_df
+        )
+
+    # Helper to check if two regions can trade (any state in region1 can trade with any in region2)
+    def regions_can_trade(r1, r2):
+        for s1 in region_states[r1]:
+            for s2 in region_states[r2]:
+                if can_states_trade(s1, s2, rectable_df):
+                    return True
+        return False
+
+    # Helper to check if a region can trade with ALL regions in a zone
+    def region_can_join_zone(region, zone_regions):
+        for existing_region in zone_regions:
+            if not regions_can_trade(region, existing_region):
+                return False
+        return True
+
+    # Build zones: each region joins the first zone where it can trade with ALL members
+    # If no such zone exists, create a new zone
+    zones = []
+    for region in regions:
+        joined = False
+        for zone in zones:
+            if region_can_join_zone(region, zone):
+                zone.append(region)
+                joined = True
+                break
+        if not joined:
+            zones.append([region])
+
+    # Sort zones for consistent output
+    zones = [sorted(zone) for zone in zones]
+
+    return zones, expanded_region_aggregations
+
+
+def get_qualified_technologies(plants_df, new_resources, allowed_techs_df):
+    """Determine which technologies qualify for RPS and CES policies."""
+    rps_keywords = allowed_techs_df["RPS"].dropna().str.lower().tolist()
+    ces_keywords = allowed_techs_df["CES"].dropna().str.lower().tolist()
+
+    all_techs = set()
+    if plants_df is not None and not plants_df.empty:
+        all_techs.update(plants_df["technology"].dropna().astype(str).tolist())
+    if new_resources:
+        for res in new_resources:
+            if isinstance(res, (list, tuple)) and len(res) > 0:
+                # Combine technology and tech_detail for matching (e.g., "NaturalGas | CCS")
+                tech_name = str(res[0])
+                tech_detail = str(res[1]) if len(res) > 1 else ""
+                combined = f"{tech_name} {tech_detail}".strip()
+                all_techs.add(combined)
+
+    rps_qualified = set()
+    ces_qualified = set()
+    for tech in all_techs:
+        tech_lower = str(tech).lower()
+        for keyword in rps_keywords:
+            if keyword in tech_lower:
+                rps_qualified.add(tech)
+                break
+        for keyword in ces_keywords:
+            if keyword in tech_lower:
+                ces_qualified.add(tech)
+                break
+    return rps_qualified, ces_qualified
+
+
+def aggregate_policy_for_region(
+    region_bas, year, policy_type, hierarchy_df, pop_fraction_df, policy_df
+):
+    """Compute population-weighted policy requirement for a model region in a given year."""
+    ba_to_state_val = extract_state_for_region(region_bas, hierarchy_df)
+    total_requirement = 0.0
+    for ba in region_bas:
+        state_val = ba_to_state_val[ba]
+        ba_pop = pop_fraction_df[
+            (pop_fraction_df["region"] == ba) & (pop_fraction_df["st"] == state_val)
+        ]
+        if ba_pop.empty:
+            frac = 1.0 / len(region_bas)
+        else:
+            frac = float(ba_pop.iloc[0]["frac_of_state_pop"])
+
+        policy_row = policy_df[
+            (policy_df["year"] == year) & (policy_df["st"] == state_val)
+        ]
+        if policy_row.empty:
+            policy_value = 0.0
+        else:
+            col_name = "rps_all" if policy_type == "RPS" else "Value"
+            policy_value = (
+                float(policy_row.iloc[0][col_name])
+                if col_name in policy_row.columns
+                else 0.0
+            )
+        total_requirement += frac * policy_value
+    return total_requirement
+
+
+def generate_emission_policies_csv(
+    region_aggregations,
+    model_years,
+    zones,
+    hierarchy_df,
+    pop_fraction_df,
+    rps_df,
+    ces_df,
+    include_rps=True,
+    include_ces=True,
+    case_id="all",
+):
+    """Generate emission_policies.csv data."""
+    max_year_in_data_rps = rps_df["year"].max()
+    max_year_in_data_ces = ces_df["year"].max()
+
+    rows = []
+    esr_constraint_num = 1
+    esr_map = {}
+    zone_esr_map = {}
+
+    for zone_idx, zone_regions in enumerate(zones):
+        zone_rps = None
+        zone_ces = None
+        if include_rps:
+            zone_rps = f"ESR_{esr_constraint_num}"
+            esr_map[zone_rps] = zone_regions
+            esr_constraint_num += 1
+        if include_ces:
+            zone_ces = f"ESR_{esr_constraint_num}"
+            esr_map[zone_ces] = zone_regions
+            esr_constraint_num += 1
+        zone_esr_map[zone_idx] = (zone_rps, zone_ces)
+
+    for region_name, region_bas in region_aggregations.items():
+        region_zone = None
+        for zone_idx, zone_regions in enumerate(zones):
+            if region_name in zone_regions:
+                region_zone = zone_idx
+                break
+        if region_zone is None:
+            continue
+
+        zone_rps, zone_ces = zone_esr_map[region_zone]
+        for year in model_years:
+            row = {"case_id": case_id, "year": int(year), "region": region_name}
+            use_year_rps = min(year, max_year_in_data_rps)
+            use_year_ces = min(year, max_year_in_data_ces)
+            if zone_rps:
+                rps_val = aggregate_policy_for_region(
+                    region_bas,
+                    use_year_rps,
+                    "RPS",
+                    hierarchy_df,
+                    pop_fraction_df,
+                    rps_df,
+                )
+                row[zone_rps] = round(float(rps_val), 3)
+            if zone_ces:
+                ces_val = aggregate_policy_for_region(
+                    region_bas,
+                    use_year_ces,
+                    "CES",
+                    hierarchy_df,
+                    pop_fraction_df,
+                    ces_df,
+                )
+                row[zone_ces] = round(float(ces_val), 3)
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    for zone_idx, zone_regions in enumerate(zones):
+        zone_rps, zone_ces = zone_esr_map[zone_idx]
+        if zone_rps and zone_ces:
+            for idx, row in df.iterrows():
+                if row["region"] in zone_regions:
+                    rps_val = df.at[idx, zone_rps]
+                    ces_val = df.at[idx, zone_ces]
+                    if ces_val < rps_val:
+                        df.at[idx, zone_ces] = rps_val
+
+    # Sort ESR columns by numeric ID (ESR_1, ESR_2, ... ESR_10, ESR_11, not ESR_1, ESR_10, ESR_11, ESR_2)
+    esr_cols = [c for c in df.columns if c.startswith("ESR_")]
+    esr_cols_sorted = sorted(esr_cols, key=lambda x: int(x.split("_")[1]))
+    columns = ["case_id", "year", "region"] + esr_cols_sorted
+    df = df[columns]
+
+    return df, esr_map
 
 
 SETTINGS_FILENAMES = [
@@ -593,6 +971,16 @@ async def load_data():
     plant_map_text = await response.text()
     state.plant_region_map = pd.read_csv(StringIO(plant_map_text))
 
+    # Load rectable for ESR-compatible clustering (optional but needed if checkbox is checked)
+    update_loading_text("Loading trading rules...")
+    try:
+        response = await fetch("./data/state_policies/rectable.csv")
+        if response.ok:
+            rectable_text = await response.text()
+            state.rectable_df = pd.read_csv(StringIO(rectable_text), index_col=0)
+    except Exception:
+        pass  # Will be loaded later in ESR step if needed
+
 
 def hex_to_rgb(hex_color):
     """Convert hex color to RGB tuple."""
@@ -1053,6 +1441,7 @@ def hierarchical_cluster(
     grouping_column,
     target_regions,
     method="hierarchical-sum",
+    esr_rectable_df=None,
 ):
     """
     Hierarchical clustering that respects grouping column boundaries.
@@ -1061,6 +1450,9 @@ def hierarchical_cluster(
     Phase 2: Merge entire grouping column regions together if needed
 
     Grouping column regions are never split across model regions.
+
+    If esr_rectable_df is provided, also removes edges between BAs in states
+    that cannot trade (even transitively), ensuring ESR-compatible clustering.
     """
     # Parse method
     if method == "spectral":
@@ -1083,6 +1475,30 @@ def hierarchical_cluster(
             groups[group] = set()
         groups[group].add(ba)
 
+    # Build BA to state mapping for ESR-compatible clustering
+    ba_to_state = {}
+    if esr_rectable_df is not None:
+        for ba in cluster_bas:
+            row = hierarchy_df[hierarchy_df["ba"] == ba]
+            if not row.empty:
+                ba_to_state[ba] = str(row.iloc[0]["st"]).lower()
+
+        # Pre-split grouping column groups by trading zones
+        # This ensures BAs in non-trading states are never in the same group
+        new_groups = {}
+        for group_name, group_bas in groups.items():
+            trading_subgroups = split_bas_by_trading_zones(
+                group_bas, hierarchy_df, esr_rectable_df
+            )
+            if len(trading_subgroups) == 1:
+                # No split needed
+                new_groups[group_name] = group_bas
+            else:
+                # Split into multiple subgroups with suffixed names
+                for i, subgroup in enumerate(trading_subgroups):
+                    new_groups[f"{group_name}_tz{i+1}"] = subgroup
+        groups = new_groups
+
     num_groups = len(groups)
 
     # If target is >= number of groups, cluster within each group
@@ -1101,6 +1517,17 @@ def hierarchical_cluster(
         for u, v in graph.edges():
             if ba_to_group.get(u) != ba_to_group.get(v):
                 edges_to_remove.append((u, v))
+
+        # Also remove edges between BAs in non-trading states if ESR-compatible
+        if esr_rectable_df is not None:
+            for u, v in graph.edges():
+                if (u, v) in edges_to_remove:
+                    continue  # Already marked for removal
+                state_u = ba_to_state.get(u)
+                state_v = ba_to_state.get(v)
+                if state_u and state_v and state_u != state_v:
+                    if not can_states_trade(state_u, state_v, esr_rectable_df):
+                        edges_to_remove.append((u, v))
 
         graph.remove_edges_from(edges_to_remove)
 
@@ -1178,6 +1605,14 @@ def hierarchical_cluster(
                     group_to = group
 
             if group_from and group_to and group_from != group_to:
+                # If ESR-compatible, skip edges between BAs in non-trading states
+                if esr_rectable_df is not None:
+                    state_from = ba_to_state.get(ba_from)
+                    state_to = ba_to_state.get(ba_to)
+                    if state_from and state_to and state_from != state_to:
+                        if not can_states_trade(state_from, state_to, esr_rectable_df):
+                            continue  # Skip this edge
+
                 if group_graph.has_edge(group_from, group_to):
                     group_graph[group_from][group_to]["weight"] += capacity
                 else:
@@ -1495,12 +1930,16 @@ def run_clustering(
     min_regions=None,
     max_regions=None,
     method="hierarchical-sum",
+    esr_compatible=False,
 ):
     """
     Run the clustering algorithm.
 
     Returns a tuple of (model_regions, region_aggregations, error_message, info)
     where info is a dict with optional metadata like chosen_n and modularity.
+
+    If esr_compatible=True, BAs are first split by trading zone connectivity
+    to ensure all states in a resulting region can trade with each other.
     """
     try:
         info = {}
@@ -1522,6 +1961,17 @@ def run_clustering(
 
         # BAs to cluster
         cluster_bas = selected_bas - unclustered_bas
+
+        # If ESR-compatible clustering is enabled, split BAs by trading zones
+        # This ensures that BAs whose states can't trade (even transitively) are kept separate
+        if esr_compatible and state.rectable_df is not None and len(cluster_bas) > 1:
+            trading_groups = split_bas_by_trading_zones(
+                cluster_bas, state.hierarchy_df, state.rectable_df
+            )
+            # If trading creates multiple disjoint groups, treat the smaller groups as "unclustered"
+            # so they don't get merged with incompatible BAs
+            if len(trading_groups) > 1:
+                info["trading_zone_splits"] = len(trading_groups)
 
         if len(cluster_bas) < 2:
             # Only unclustered BAs - use state abbreviation naming
@@ -1602,6 +2052,7 @@ def run_clustering(
                     grouping_column,
                     actual_target,
                     method=method,
+                    esr_rectable_df=state.rectable_df if esr_compatible else None,
                 )
 
             # Calculate modularity for info
@@ -2121,6 +2572,10 @@ def on_run_clustering(event):
     for cb in checkboxes:
         no_cluster_groups.append(cb.value)
 
+    # Check if ESR-compatible clustering is enabled
+    esr_compat_el = document.getElementById("esrCompatibleClustering")
+    esr_compatible = esr_compat_el.checked if esr_compat_el else False
+
     # Run clustering
     model_regions, region_aggregations, error, info = run_clustering(
         state.selected_bas,
@@ -2131,6 +2586,7 @@ def on_run_clustering(event):
         min_regions=min_regions,
         max_regions=max_regions,
         method=method,
+        esr_compatible=esr_compatible,
     )
 
     if error:
@@ -2167,10 +2623,11 @@ def on_run_clustering(event):
 
         set_status(msg, "success")
     else:
+        esr_note = " or ESR-compatible trading constraints" if esr_compatible else ""
         if num_regions > target_regions:
             set_status(
                 f"Warning: Created {num_regions} regions, which is more than the target of {target_regions}. "
-                f"This can happen when 'unclustered' groups or disconnected BAs exceed the target. "
+                f"This can happen when 'unclustered' groups{esr_note} or disconnected BAs exceed the target. "
                 f"Modularity: {modularity:.3f}",
                 "error",
             )
@@ -3171,6 +3628,65 @@ def build_fuel_scenario_index(df: pd.DataFrame) -> dict:
     return idx
 
 
+async def load_esr_data():
+    """Load ESR-related CSV files. Called when user accesses ESR step."""
+    try:
+        update_loading_text("Loading ESR data...")
+
+        # Load RPS data
+        response = await fetch("./data/state_policies/rps_fraction.csv")
+        if response.ok:
+            rps_text = await response.text()
+            state.rps_df = pd.read_csv(StringIO(rps_text))
+            state.rps_df["st"] = state.rps_df["st"].str.lower()
+            # Column is 't' not 'year'
+            if "t" in state.rps_df.columns:
+                state.rps_df = state.rps_df.rename(columns={"t": "year"})
+            state.rps_df["year"] = pd.to_numeric(
+                state.rps_df["year"], errors="coerce"
+            ).astype("Int64")
+
+        # Load CES data
+        response = await fetch("./data/state_policies/ces_fraction.csv")
+        if response.ok:
+            ces_text = await response.text()
+            state.ces_df = pd.read_csv(StringIO(ces_text))
+            state.ces_df["st"] = state.ces_df["st"].str.lower()
+            # Column might be '*t' or 't' - rename to 'year'
+            if "*t" in state.ces_df.columns:
+                state.ces_df = state.ces_df.rename(columns={"*t": "year"})
+            elif "t" in state.ces_df.columns:
+                state.ces_df = state.ces_df.rename(columns={"t": "year"})
+            state.ces_df["year"] = pd.to_numeric(
+                state.ces_df["year"], errors="coerce"
+            ).astype("Int64")
+
+        # Load rectable (trading rules)
+        response = await fetch("./data/state_policies/rectable.csv")
+        if response.ok:
+            rectable_text = await response.text()
+            state.rectable_df = pd.read_csv(StringIO(rectable_text), index_col=0)
+
+        # Load population fractions
+        response = await fetch("./data/state_policies/state-pop-fraction.csv")
+        if response.ok:
+            pop_text = await response.text()
+            state.pop_fraction_df = pd.read_csv(StringIO(pop_text))
+            state.pop_fraction_df["st"] = state.pop_fraction_df["st"].str.lower()
+            state.pop_fraction_df["region"] = (
+                state.pop_fraction_df["region"].astype(str).str.lower()
+            )
+
+        # Load allowed techs
+        response = await fetch("./data/state_policies/allowed_techs.csv")
+        if response.ok:
+            allowed_text = await response.text()
+            state.allowed_techs_df = pd.read_csv(StringIO(allowed_text))
+
+    except Exception as e:
+        raise Exception(f"Error loading ESR data: {e}")
+
+
 def _set_select_options_simple(
     select_el, values, *, selected_value=None, empty_label=None
 ):
@@ -4085,6 +4601,13 @@ def generate_resource_tags_settings():
     return yaml.dump(out, default_flow_style=False, sort_keys=False)
 
 
+def generate_emission_policies_settings():
+    """Generate emission_policies.csv as a string."""
+    if state.emission_policies_df is None:
+        return None
+    return state.emission_policies_df.to_csv(index=False)
+
+
 def generate_model_definition_settings():
     region_aggs = _get_region_aggregations_or_raise()
     model_regions = sorted(region_aggs.keys())
@@ -4219,6 +4742,151 @@ def on_grouping_change(event):
 
 
 # ============================================================================
+# ESR Generation Functions
+# ============================================================================
+
+
+def set_esr_status(message, status_type="info"):
+    """Update the ESR result text box."""
+    el = document.getElementById("esrResultText")
+    if el:
+        el.textContent = message
+        el.className = f"status {status_type}"
+        el.style.display = "block"
+
+
+def render_esr_results():
+    """Render the ESR analysis results."""
+    rps_list = document.getElementById("esrRPSTechList")
+    ces_list = document.getElementById("esrCESTechList")
+    zones_list = document.getElementById("esrZonesList")
+    csv_preview = document.getElementById("esrCsvPreview")
+
+    # Render RPS techs
+    if rps_list and hasattr(state, "esr_rps_techs"):
+        if state.esr_rps_techs:
+            rps_html = "".join(
+                f"<span class='ba-tag'>{html.escape(tech)}</span>"
+                for tech in sorted(state.esr_rps_techs)
+            )
+            rps_list.innerHTML = rps_html
+        else:
+            rps_list.innerHTML = "<em>No RPS-qualified technologies found.</em>"
+
+    # Render CES techs
+    if ces_list and hasattr(state, "esr_ces_techs"):
+        if state.esr_ces_techs:
+            ces_html = "".join(
+                f"<span class='ba-tag'>{html.escape(tech)}</span>"
+                for tech in sorted(state.esr_ces_techs)
+            )
+            ces_list.innerHTML = ces_html
+        else:
+            ces_list.innerHTML = "<em>No CES-qualified technologies found.</em>"
+
+    # Render zones
+    if zones_list and state.esr_zones:
+        zones_html = "".join(
+            f"<div class='candidate-item'><strong>Zone {i+1}:</strong> {', '.join(zone)}</div>"
+            for i, zone in enumerate(state.esr_zones)
+        )
+        zones_list.innerHTML = zones_html
+
+    # Render CSV preview
+    if csv_preview and state.emission_policies_df is not None:
+        csv_str = state.emission_policies_df.to_csv(index=False)
+        csv_preview.value = csv_str
+
+
+def on_run_esr_analysis(event):
+    """Handle Run ESR Analysis button click."""
+    try:
+        # Check that region clustering has been run
+        if not state.region_aggregations:
+            set_esr_status("Run region clustering first (Step 1).", "error")
+            return
+
+        # Check that all ESR data is loaded
+        missing_data = []
+        if state.rps_df is None:
+            missing_data.append("RPS policies")
+        if state.ces_df is None:
+            missing_data.append("CES policies")
+        if state.rectable_df is None:
+            missing_data.append("trading rules")
+        if state.pop_fraction_df is None:
+            missing_data.append("population fractions")
+        if state.allowed_techs_df is None:
+            missing_data.append("allowed techs")
+
+        if missing_data:
+            set_esr_status(
+                f"ESR data still loading ({', '.join(missing_data)}). Please wait a moment and try again.",
+                "error",
+            )
+            return
+
+        set_esr_status("Analyzing ESR zones...", "info")
+
+        # Get model years
+        model_years_input = document.getElementById("modelYears").value
+        model_years = parse_int_list(model_years_input)
+        if not model_years:
+            set_esr_status("Set model years in Model Setup step (Step 2).", "error")
+            return
+
+        # Get toggle states
+        include_rps = document.getElementById("esrIncludeRPS").checked
+        include_ces = document.getElementById("esrIncludeCES").checked
+
+        if not include_rps and not include_ces:
+            set_esr_status("Enable at least one of RPS or CES constraints.", "error")
+            return
+
+        # Build ESR zones
+        state.esr_zones, esr_region_aggregations = build_esr_zones(
+            state.region_aggregations, state.hierarchy_df, state.rectable_df
+        )
+
+        # Get qualified technologies
+        # Collect new resources from textarea
+        raw_el = document.getElementById("newResourcesRaw")
+        new_resources = parse_new_resources_text(raw_el.value if raw_el else "")
+
+        state.esr_rps_techs, state.esr_ces_techs = get_qualified_technologies(
+            state.plants_df, new_resources, state.allowed_techs_df
+        )
+
+        # Generate emission policies CSV using expanded region aggregations
+        state.emission_policies_df, state.esr_map = generate_emission_policies_csv(
+            esr_region_aggregations,
+            model_years,
+            state.esr_zones,
+            state.hierarchy_df,
+            state.pop_fraction_df,
+            state.rps_df,
+            state.ces_df,
+            include_rps=include_rps,
+            include_ces=include_ces,
+            case_id="all",
+        )
+
+        # Render results
+        render_esr_results()
+
+        set_esr_status(
+            f"ESR analysis complete: {len(state.esr_zones)} zones, "
+            f"{len(state.esr_rps_techs)} RPS techs, {len(state.esr_ces_techs)} CES techs",
+            "success",
+        )
+
+    except ESRGenerationError as e:
+        set_esr_status(f"ESR Error: {e}", "error")
+    except Exception as e:
+        set_esr_status(f"ESR Analysis Error: {e}", "error")
+
+
+# ============================================================================
 # Initialization
 # ============================================================================
 
@@ -4327,6 +4995,11 @@ async def main():
             "click", create_proxy(on_download_settings_file)
         )
 
+        # ESR step
+        document.getElementById("runESRBtn").addEventListener(
+            "click", create_proxy(on_run_esr_analysis)
+        )
+
         # Fuel scenario options
         document.getElementById("fuelDataYear").addEventListener(
             "change", create_proxy(populate_fuel_scenario_selects)
@@ -4381,6 +5054,17 @@ async def main():
         render_modified_resources_list()
         populate_settings_file_select()
         update_settings_preview()
+
+        # Set up deferred ESR data loading
+        async def load_esr_data_deferred():
+            try:
+                await load_esr_data()
+            except Exception as e:
+                set_status(f"Failed to load ESR data: {e}", "error")
+
+        window.loadESRDataOnDemand = create_proxy(
+            lambda: asyncio.ensure_future(load_esr_data_deferred())
+        )
 
         # Done loading
         hide_loading()
