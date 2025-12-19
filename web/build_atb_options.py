@@ -99,12 +99,14 @@ def download_to_temp(url: str) -> Path:
     url = str(url).strip()
     if not url:
         raise ValueError("Empty URL")
+    if not url.startswith("https://"):
+        raise ValueError(f"Only 'https://' URLs are allowed (got {url!r})")
 
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet")
     tmp_path = Path(tmp.name)
 
     try:
-        with urllib.request.urlopen(url) as resp:  # nosec - URL is user-provided
+        with urllib.request.urlopen(url) as resp:
             while True:
                 chunk = resp.read(1024 * 1024)
                 if not chunk:
