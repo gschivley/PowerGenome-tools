@@ -599,13 +599,7 @@
         }
 
         /* Button group layout - responsive */
-        .button-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
+        .button-group,
         .button-group-with-input {
             display: flex;
             gap: 8px;
@@ -619,30 +613,27 @@
             min-width: 120px;
         }
 
+        /* Add top margin variant for spacing */
+        .button-group--spaced {
+            margin-top: 8px;
+        }
+
         /* Responsive layout for smaller screens */
         @media (max-width: 768px) {
-            .button-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .button-group .btn {
-                margin-right: 0;
-                margin-bottom: 8px;
-            }
-
+            .button-group,
             .button-group-with-input {
                 flex-direction: column;
                 align-items: stretch;
             }
 
-            .button-group-with-input input {
-                width: 100%;
+            .button-group .btn,
+            .button-group-with-input .btn {
+                margin-right: 0;
                 margin-bottom: 8px;
             }
 
-            .button-group-with-input .btn {
-                margin-right: 0;
+            .button-group-with-input input {
+                width: 100%;
                 margin-bottom: 8px;
             }
         }
@@ -989,7 +980,7 @@
                                 <select id="omitSelectedList" multiple size="8"></select>
                             </div>
                         </div>
-                        <div class="button-group" style="margin-top: 8px;">
+                        <div class="button-group button-group--spaced">
                             <button class="btn btn-secondary small-btn" id="omitResetBtn" type="button">Reset
                                 defaults</button>
                             <div style="font-size: 11px; color: #666;">All Other, Flywheel, and Solar thermal
