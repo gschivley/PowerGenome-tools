@@ -2287,16 +2287,27 @@ def inertia_single_cluster(features, weights=None):
 
 
 def build_ba_to_model_region_map():
-    """Return BA -> model region lookup using current clustering (or identity)."""
+    """Return BA -> model region lookup using current clustering (or selected BAs).
+    
+    If clustering has been run, uses the region_aggregations.
+    If not, but BAs are selected, maps selected BAs to themselves and excludes others.
+    If nothing is selected, maps all BAs to themselves (fallback).
+    
+    Note: Only BAs that are part of the clustering (i.e., in region_aggregations)
+    are included. Plants in other BAs are excluded from clustering.
+    """
     if state.region_aggregations:
         mapping = {}
         for region_name, bas in state.region_aggregations.items():
             for ba in bas:
                 mapping[ba] = region_name
-        # Keep any unseen BAs mapped to themselves so plants are not dropped
-        for ba in state.all_bas:
-            mapping.setdefault(ba, ba)
+        # Only return mapping for clustered BAs - plants in other BAs will be
+        # dropped during the merge (their model_region will be NaN)
         return mapping
+
+    # If BAs are selected but clustering hasn't been run, only include selected BAs
+    if state.selected_bas:
+        return {ba: ba for ba in state.selected_bas}
 
     # Fallback to identity mapping (each BA is its own model region)
     return {ba: ba for ba in state.all_bas}
