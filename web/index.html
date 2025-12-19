@@ -633,7 +633,7 @@
                     <div id="statusBox" class="status info">Click BAs on the map to select them for clustering.</div>
 
                     <div class="instructions">
-                        <div class="instructions-header" onclick="toggleInstructions()">
+                        <div class="instructions-header" onclick="toggleCollapsible('instructionsContent', 'instructionsToggle')">
                             <span>📖 How to Use</span>
                             <span class="instructions-toggle" id="instructionsToggle">▶ Show</span>
                         </div>
@@ -824,7 +824,7 @@
                 </div>
 
                 <div class="instructions">
-                    <div class="instructions-header" onclick="togglePlantInstructions()">
+                    <div class="instructions-header" onclick="toggleCollapsible('plantInstructionsContent', 'plantInstructionsToggle')">
                         <span>📖 How to Use</span>
                         <span class="instructions-toggle" id="plantInstructionsToggle">▶ Show</span>
                     </div>
@@ -1251,30 +1251,6 @@ wacc_real: 0.05"></textarea>
         }
 
         // Instructions Toggles
-        function toggleInstructions() {
-            const content = document.getElementById('instructionsContent');
-            const toggle = document.getElementById('instructionsToggle');
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                toggle.textContent = '▼ Hide';
-            } else {
-                content.classList.add('hidden');
-                toggle.textContent = '▶ Show';
-            }
-        }
-
-        function togglePlantInstructions() {
-            const content = document.getElementById('plantInstructionsContent');
-            const toggle = document.getElementById('plantInstructionsToggle');
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                toggle.textContent = '▼ Hide';
-            } else {
-                content.classList.add('hidden');
-                toggle.textContent = '▶ Show';
-            }
-        }
-
         function toggleCollapsible(contentId, toggleId) {
             const content = document.getElementById(contentId);
             const toggle = document.getElementById(toggleId);
