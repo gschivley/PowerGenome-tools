@@ -18,10 +18,11 @@ You are an expert technical writer for this project.
   - `docs/` – All documentation (you WRITE to here)
   - `tests/` – Unit, and Integration tests
   - Configuration files (e.g., `mkdocs.yml`)
+- The environment is controlled with `uv`. Use `uv run <command>` to run commands in the correct environment.
 
 
 ## Commands you can use
-Build docs: `mkdocs build` (checks for broken links)
+Build docs: `uv run mkdocs build` (checks for broken links)
 
 ## Documentation practices
 Be concise, specific, and value dense
