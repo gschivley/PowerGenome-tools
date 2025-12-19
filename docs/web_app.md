@@ -1,6 +1,6 @@
 # Web Application
 
-The PowerGenome Design Wizard is a comprehensive web-based interface for building complete PowerGenome settings files. It guides users through a 6-step process to define model regions, configure resources, and export ready-to-use configuration files. The application runs entirely in the browser using PyScript—no installation required.
+The PowerGenome Design Wizard is a comprehensive web-based interface for building complete PowerGenome settings files. It guides users through a 7-step process to define model regions, configure resources, and export ready-to-use configuration files. The application runs entirely in the browser using PyScript—no installation required.
 
 [Launch Web App](https://gschivley.github.io/PowerGenome-tools/web/){ .md-button .md-button--primary }
 
@@ -13,7 +13,8 @@ The wizard approach ensures you configure all necessary settings in the correct 
 3. **Existing Plants** - Aggregate existing generators within regions
 4. **New Resources** - Select new-build technologies and define custom resources
 5. **Fuels** - Choose fuel price scenarios
-6. **Export** - Generate and download complete settings YAML files
+6. **ESR Policies** - Configure Energy Share Requirements for state-level policies (optional)
+7. **Export** - Generate and download complete settings YAML files
 
 Each step builds on the previous ones, with the Regions step being the foundation that determines how plants are aggregated and how model boundaries are defined.
 
@@ -107,6 +108,45 @@ Once you've selected a grouping column, you need to decide how many regions you 
 
 **Key Takeaway**: Different combinations of grouping, algorithm, and target will produce different results. **Try multiple configurations** and evaluate whether the resulting regions make sense for your use case (balanced sizes, grid-operational coherence, computational feasibility). Your judgment about the appropriateness of the results is as important as the algorithmic quality metrics.
 
+### ESR-Compatible Clustering
+
+When modeling state-level energy policies like Renewable Portfolio Standards (RPS) or Clean Energy Standards (CES), you may want model regions that respect state trading boundaries. The **ESR-compatible clustering** option ensures that Balancing Authorities are only grouped together if their states can trade renewable energy credits (RECs) or clean energy credits with each other.
+
+#### When to Enable ESR-Compatible Clustering
+
+This option is **not required** for ESR policy modeling—the ESR step (Step 6) will automatically handle any incompatibilities. However, enabling it during clustering can produce cleaner results:
+
+**Enable this option when:**
+
+* You want to prevent model regions from being split later in the ESR step
+* You prefer simpler region names without `_esr1`, `_esr2` suffixes
+* Your analysis heavily depends on state trading boundaries
+
+**Leave it disabled when:**
+
+* You prioritize transmission-based clustering over trading constraints
+* You're okay with some regions being split for ESR purposes
+* You're not modeling state-level energy policies
+
+#### How It Works
+
+When ESR-compatible clustering is enabled, the algorithm checks whether BAs can be grouped based on their states' trading relationships:
+
+1. **Trading relationships** are defined in `rectable.csv`, which specifies which states can trade REC/ESR credits with each other.
+2. **Transitive trading** is applied: if State A can trade with State C, and State B can trade with State C, then BAs in States A and B can be in the same model region. This captures indirect trading relationships through common trading partners.
+3. BAs in states that cannot trade (even transitively) will **never** be placed in the same model region, regardless of transmission capacity.
+
+#### Impact on Results
+
+ESR-compatible clustering adds constraints that may affect your clustering results:
+
+* The algorithm may create **more regions** than your target number if trading boundaries require separation
+* When this happens, you'll see a warning explaining why the target couldn't be achieved
+* Regions will be smaller but will correctly represent policy trading zones
+
+!!! tip
+    If you skip ESR-compatible clustering and your model regions contain states that cannot trade with each other, the ESR step will automatically split those regions into sub-regions (e.g., `RegionName_esr1`, `RegionName_esr2`) for policy tracking purposes.
+
 For detailed technical information about the clustering algorithms used in this step, see the [Algorithms documentation](algorithms.md).
 
 ## Step 2: Model Setup
@@ -186,7 +226,34 @@ For each fuel (coal, natural gas, distillate, uranium), choose a price scenario:
 !!! tip
     If fuel scenario options can't be loaded (offline use), the app falls back to `reference` for all fuels.
 
-## Step 6: Export
+## Step 6: ESR Policies
+
+The ESR Policies step allows you to configure Energy Share Requirements for state-level policies like Renewable Portfolio Standards (RPS) and Clean Energy Standards (CES). This step is optional—uncheck "Include ESR policies" if your analysis doesn't require policy constraints.
+
+### How ESR Zones Work
+
+The app automatically groups your model regions into ESR zones based on state trading rules defined in `rectable.csv`. States that can trade renewable energy credits (RECs) or clean energy credits with each other are placed in the same zone.
+
+### Automatic Region Splitting
+
+If a model region contains states that **cannot** trade with each other (even transitively), the app automatically splits that region into sub-regions for ESR purposes:
+
+* Sub-regions are named with `_esr1`, `_esr2`, etc. suffixes (e.g., `MidAtlantic_esr1`, `MidAtlantic_esr2`)
+* Each sub-region contains only states that can trade with each other
+* The generated CSV output uses these expanded region names
+
+!!! tip
+    To avoid region splitting, enable **ESR-compatible clustering** in Step 1. This builds trading constraints into the clustering algorithm upfront, ensuring all BAs in a region can trade within the same ESR zone.
+
+### Generated Output
+
+The ESR step generates a CSV file (`emission_policies.csv`) containing:
+
+* ESR zone assignments for each region (or sub-region)
+* Policy requirements (RPS and CES fractions) by zone and year
+* Technology qualification mappings
+
+## Step 7: Export
 
 The Export step generates complete PowerGenome settings files based on all previous configuration steps.
 
