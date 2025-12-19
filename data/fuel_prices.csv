@@ -1,0 +1,12 @@
+year,price,data_year,scenario,fuel,region,dollar_year
+2024,2.11569,2025,no_111d,coal,p1,2024
+2024,2.12827,2025,reference,coal,p1,2024
+2024,19.0728,2025,no_111d,distillate,p1,2024
+2024,19.0728,2025,reference,distillate,p1,2024
+2024,3.17084,2025,no_111d,naturalgas,p1,2024
+2024,3.17877,2025,reference,naturalgas,p1,2024
+2024,0.753328,2025,no_111d,uranium,p1,2024
+2024,0.753328,2025,reference,uranium,p1,2024
+2024,2.6739,2025,low_price,coal,p103,2024
+2024,9.55894,2025,low_price,distillate,p108,2024
+2024,0.752914,2025,high_price,uranium,p12,2024
