@@ -1,19 +1,27 @@
 # Web Application
 
-The PowerGenome Web Clustering Tool allows users to interactively select regions, configure clustering parameters, and visualize results on a map. It runs entirely in the browser using PyScript.
+The PowerGenome Design Wizard is a comprehensive web-based interface for building complete PowerGenome settings files. It guides users through a 6-step process to define model regions, configure resources, and export ready-to-use configuration files. The application runs entirely in the browser using PyScript—no installation required.
 
 [Launch Web App](https://gschivley.github.io/PowerGenome-tools/web/){ .md-button .md-button--primary }
 
-## Features
+## Overview
 
-* **Interactive Map**: View Balancing Authorities (BAs) and transmission lines.
-* **Region Clustering**: Aggregate BAs into model regions based on transmission capacity.
-* **Plant Clustering**: Cluster power plants within regions based on technology and efficiency.
-* **YAML Export**: Generate configuration files compatible with PowerGenome.
+The wizard approach ensures you configure all necessary settings in the correct order:
 
-## How to Use
+1. **Regions** - Define model regions by clustering Balancing Authorities
+2. **Model Setup** - Configure planning years and financial parameters
+3. **Existing Plants** - Aggregate existing generators within regions
+4. **New Resources** - Select new-build technologies and define custom resources
+5. **Fuels** - Choose fuel price scenarios
+6. **Export** - Generate and download complete settings YAML files
 
-### Region Clustering
+Each step builds on the previous ones, with the Regions step being the foundation that determines how plants are aggregated and how model boundaries are defined.
+
+## Step 1: Regions
+
+The Regions step allows you to select Balancing Authorities and cluster them into model regions based on transmission capacity. This is the foundation of your PowerGenome model configuration.
+
+### How to Use Region Clustering
 
 1. **Select BAs**: Click on regions in the map to select them. Use **Box Select** mode to drag and select multiple BAs at once.
 2. **Choose grouping**: The *Grouping Column* determines how BAs are grouped for clustering (colored outlines show groups).
@@ -25,7 +33,7 @@ The PowerGenome Web Clustering Tool allows users to interactively select regions
 !!! tip
     The clustering uses transmission capacity between BAs to create aggregated regions. BAs are first clustered within their selected grouping (e.g., NERC region), then groups are merged to reach the target number of regions. The selected grouping affects the clustering results, so experiment with different options to see what works best for your case!
 
-## Clustering Configuration Guide
+### Clustering Configuration Guide
 
 Selecting the right grouping column and clustering algorithm is essential for producing model regions that are both computationally tractable and physically meaningful. This section explains how different choices affect your results.
 
@@ -99,6 +107,26 @@ Once you've selected a grouping column, you need to decide how many regions you 
 
 **Key Takeaway**: Different combinations of grouping, algorithm, and target will produce different results. **Try multiple configurations** and evaluate whether the resulting regions make sense for your use case (balanced sizes, grid-operational coherence, computational feasibility). Your judgment about the appropriateness of the results is as important as the algorithmic quality metrics.
 
+For detailed technical information about the clustering algorithms used in this step, see the [Algorithms documentation](algorithms.md).
+
+## Step 2: Model Setup
+
+The Model Setup step allows you to configure the temporal and financial parameters for your PowerGenome model.
+
+### Configuration Options
+
+* **Target USD Year**: The dollar year for all cost values (e.g., 2024)
+* **UTC Offset**: Timezone offset for demand and weather data
+* **Model Years**: Comma-separated list of years to model (e.g., 2030, 2035, 2040)
+* **First Planning Years**: Comma-separated list of first planning years corresponding to each model year
+
+!!! note
+    Model Years and First Planning Years must be lists of the same length. These define the temporal scope of your capacity expansion analysis.
+
+## Step 3: Existing Plants
+
+The Existing Plants step allows you to cluster existing generators within each model region. This reduces model complexity while preserving the operational diversity of the fleet.
+
 ### Plant Clustering
 
 1. **Select technologies to omit**: Choose which technology types to exclude from clustering (e.g., "All Other", "Solar thermal", "Flywheel" are pre-selected).
@@ -111,25 +139,70 @@ Once you've selected a grouping column, you need to decide how many regions you 
 8. **Export**: Copy or download the YAML output.
 
 !!! tip
-    Plant clustering respects the model regions created in the Regions tab. If you haven't run region clustering yet, plants are grouped by their BA. The system uses heat rate variability and capacity to suggest clusters; larger, more varied generator fleets get more clusters when budget allows.
+    Plant clustering respects the model regions created in the Regions step. If you haven't run region clustering yet, plants are grouped by their BA. The system uses heat rate variability and capacity to suggest clusters; larger, more varied generator fleets get more clusters when budget allows.
 
-## Settings YAML Generation
+## Step 4: New Resources
 
-The **Settings** tab generates most of the YAML settings files you need to run PowerGenome using the regions and (optionally) plant clusters created in this app.
+The New Resources step allows you to select new-build technologies from NREL's Annual Technology Baseline (ATB) and define custom modified resources.
 
-### What Files It Can Generate
+### Standard ATB Resources
 
-The app generates these files (matching the example naming convention in `settings_examples/`):
+If ATB data is available, use the dropdowns to select:
 
-* `model_definition.yml`
-* `resources.yml`
-* `fuels.yml`
-* `transmission.yml`
-* `distributed_gen.yml`
-* `resource_tags.yml`
-* `startup_costs.yml`
+* **ATB Data Year** → **Technology** → **Tech Detail** → **Cost Case**
+* Specify **Size (MW)** for each resource
 
-The app intentionally **does not generate** these files:
+You can also paste resources manually, one per line:
+
+    Technology | Tech Detail | Cost Case | Size
+
+### Modified New Resources
+
+Create custom resources by modifying existing ATB entries:
+
+1. **Base Resource**: Select an ATB technology/detail/cost case/size as the starting point
+2. **New Identity**: Define new technology/detail/cost case names for this modified resource
+3. **Fuel Type**: Choose a standard fuel (coal, natural gas, distillate, uranium) or define a new fuel with price and emissions
+4. **Resource Class Tag**: Select THERM, VRE, STOR, or other resource class
+5. **Commit Tag**: For thermal resources, optionally add to the "Commit" tag
+6. **Attribute Modifiers**: Add custom YAML attributes to override base resource properties
+
+!!! note
+    Modified resources are added to the `modified_new_resources` section of `resources.yml` and automatically update related settings in `fuels.yml` and `resource_tags.yml`.
+
+## Step 5: Fuels
+
+The Fuels step allows you to select fuel price scenarios for each fuel type in your model.
+
+### Fuel Price Scenarios
+
+Select a **Fuel Data Year** from the dropdown, which loads scenarios from [PowerGenome-data fuel_prices.csv](https://github.com/gschivley/PowerGenome-data/blob/main/data/fuel_prices.csv).
+
+For each fuel (coal, natural gas, distillate, uranium), choose a price scenario:
+
+* **Default**: Coal uses `no_111d` if available (otherwise `reference`); other fuels use `reference`
+* **Available scenarios**: Varies by fuel data year and fuel type
+
+!!! tip
+    If fuel scenario options can't be loaded (offline use), the app falls back to `reference` for all fuels.
+
+## Step 6: Export
+
+The Export step generates complete PowerGenome settings files based on all previous configuration steps.
+
+### Generated Files
+
+The app generates seven YAML files:
+
+* `model_definition.yml` - Model regions, years, and financial settings
+* `resources.yml` - Existing plant clusters, new resources, and modified resources
+* `fuels.yml` - Fuel prices and emission factors
+* `transmission.yml` - Transmission line definitions
+* `distributed_gen.yml` - Distributed generation settings
+* `resource_tags.yml` - Resource classification tags
+* `startup_costs.yml` - Startup cost parameters
+
+The app intentionally **does not generate** these files (configure separately):
 
 * `data.yml`
 * `scenario_management.yml`
@@ -137,84 +210,29 @@ The app intentionally **does not generate** these files:
 * `extra_inputs.yml`
 * `demand.yml`
 
-### Recommended Workflow
+### How to Export
 
-1. Run **Region Clustering** and export the regions YAML.
-2. (Optional) Run **Plant Clustering** and export the plant clusters YAML.
-3. Go to the **Settings** tab, review inputs, and click **Generate Settings YAMLs**.
-4. Use the file dropdown to preview each settings file, then **Download**.
-
-!!! note
-    `model_definition.yml` and several downstream defaults require region aggregations.
-    If you haven't clustered regions yet, Settings generation will prompt you to do so.
-
-### Model Definition
-
-The **Model Definition** section controls fields commonly used in `model_definition.yml`:
-
-* **Target USD year** (e.g., 2024)
-* **UTC offset**
-* **Model years** and **First planning years** (comma-separated lists; must be the same length)
-
-### Fuels and Fuel Scenarios
-
-The **Fuel Data Year** dropdown is populated from scenario data in:
-
-* [PowerGenome-data fuel_prices.csv](https://github.com/gschivley/PowerGenome-data/blob/main/data/fuel_prices.csv)
-
-Fuel scenarios are selectable per fuel (coal, natural gas, distillate, uranium) for the selected data year.
-
-Defaults:
-
-* If **`no_111d`** is available for **coal** in the selected fuel data year, coal defaults to `no_111d`.
-* Otherwise coal defaults to `reference`.
-* All other fuels default to `reference`.
-
-!!! tip
-    If fuel scenario options can’t be loaded (for example, offline use), the app falls back to `reference` for all fuels.
-
-### New-build Resources
-
-The **New-build Resources** section builds the `new_resources` list used in `resources.yml`.
-
-* If an ATB options index is available, you can use dropdowns to pick:
-    **ATB data year → technology → tech detail → cost case**, then specify **size (MW)**.
-* You can also paste resources manually, one per line:
-
-    Technology | Tech Detail | Cost Case | Size
+1. Review the configuration summary
+2. Click **Generate Settings YAMLs**
+3. Use the file dropdown to preview each settings file
+4. Click **Download** to save individual files or **Download All** for a zip archive
 
 !!! note
-    The web app reads an index file at `web/data/atb_options.json` (not the full Parquet) to keep the app lightweight.
-    If you need a complete ATB option list, regenerate that JSON offline from `technology_costs_atb.parquet`.
+    `model_definition.yml` and several downstream defaults require region aggregations from Step 1.
+    If you haven't clustered regions yet, the Export step will prompt you to complete Step 1 first.
 
-### Modified New Resources
+---
 
-The **Modified New Resources** section creates entries under `modified_new_resources` in `resources.yml` and also updates:
+## Additional Features
 
-* `fuels.yml` (fuel mapping and optional new-fuel definitions)
-* `resource_tags.yml` (tag class selection and optional `Commit` tag for thermal resources)
+### Interactive Map
 
-You can define:
+* **View Balancing Authorities**: Click on regions to select them; colored outlines show grouping
+* **Box Select Mode**: Drag to select multiple BAs at once (enabled by default)
+* **Transmission Lines**: Toggle to view transmission capacity between clustered regions
+* **Tooltips**: Hover over regions to see BA name, state, grouping, and model region (after clustering)
 
-* A **base ATB resource** (technology/detail/cost case/size)
-* A **new resource identity** (new technology/detail/cost case)
-* A **fuel type**:
-  * **Standard fuel** (coal/naturalgas/distillate/uranium)
-  * **New fuel** (enter a fuel name, price $/MMBtu, and emission factor in metric ton CO₂/MMBtu)
-* A **resource class tag** (THERM/VRE/STOR/etc.)
-* **Also Commit** (only relevant for THERM)
-* Optional **attribute modifiers** as a YAML mapping (merged into the modified resource entry)
-
-### Generate, Preview, Download
-
-After clicking **Generate Settings YAMLs**:
-
-* Use the dropdown to choose which file to preview.
-* Click **Download** to save that YAML file.
-
-!!! note
-    These generated YAMLs are intended as a starting point and mirror the app’s defaults.
-    You can always edit them further in your PowerGenome settings folder.
+---
 
 ## Running Locally
 

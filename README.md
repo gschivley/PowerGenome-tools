@@ -1,14 +1,21 @@
-# PowerGenome Clustering Tools
+# PowerGenome Design Wizard
 
-This repository contains tools for clustering Balancing Authorities (BAs) into model regions and aggregating power plants for energy system modeling (specifically PowerGenome/GenX). The primary interface is a web-based application running entirely in the browser via PyScript.
+This repository contains a comprehensive web-based interface for building complete PowerGenome settings files. The wizard guides users through defining model regions, configuring resources, selecting fuel scenarios, and exporting ready-to-use configuration files for energy system modeling (specifically PowerGenome/GenX). The application runs entirely in the browser via PyScript.
 
 **[Full Documentation](https://gschivley.github.io/PowerGenome-tools/)**
 
 ## Web Application
 
-The tool is located in the `web/` directory. It allows users to interactively select regions, configure clustering parameters, and visualize results on a map.
+The PowerGenome Design Wizard is a 6-step interface that walks users through the entire process of configuring a PowerGenome model:
 
-Use [PowerGenome Web Clustering Tool](https://gschivley.github.io/PowerGenome-tools/web/) online or run it locally as described below.
+1. **Regions** - Select Balancing Authorities and cluster them into model regions
+2. **Model Setup** - Define planning years and financial parameters
+3. **Existing Plants** - Cluster existing generators within regions
+4. **New Resources** - Select new-build technologies from NREL ATB and define custom resources
+5. **Fuels** - Choose fuel price scenarios
+6. **Export** - Generate and download complete settings YAML files
+
+Use [PowerGenome Design Wizard](https://gschivley.github.io/PowerGenome-tools/web/) online or run it locally as described below.
 
 ### Running Locally
 
@@ -34,9 +41,11 @@ Since the app uses PyScript and fetches local data files, it must be served via 
 ---
 </details>
 
-## Regional Clustering
+## Key Features
 
-The Regional Clustering tool aggregates individual Balancing Authorities (BAs) into larger "Model Regions" to reduce the computational complexity of transmission modeling.
+### Regional Clustering (Step 1)
+
+Regional clustering is a critical component of the PowerGenome Design Wizard. The tool aggregates individual Balancing Authorities (BAs) into larger "Model Regions" to reduce the computational complexity of transmission modeling.
 
 ### How it Works
 
@@ -45,6 +54,8 @@ The Regional Clustering tool aggregates individual Balancing Authorities (BAs) i
 3. **Clustering**: The algorithm merges BAs that are strongly connected by transmission lines, respecting the boundaries of the selected Grouping Column (unless groups are merged entirely).
 
 ### Algorithms Used
+
+The tool uses multiple sophisticated clustering algorithms in the Regions step:
 
 * **Spectral Clustering**: The default method. It uses the eigenvalues of the graph's Laplacian matrix to perform dimensionality reduction before clustering with K-Means. This method often produces balanced regions by finding "cuts" that minimize the ratio of cut weight to cluster volume.
 * **Louvain Community Detection**: Maximizes the **modularity** of the network. Can be used in "Auto-optimize" mode to find the natural number of regions, or constrained to a fixed target number.
@@ -116,7 +127,7 @@ flowchart TD
 
 ---
 
-## Plant Clustering
+## Plant Clustering (Step 3)
 
 The Plant Clustering tool aggregates individual generators within each Model Region into "clusters" of similar technologies. This reduces the number of variables in the optimization model while preserving the operational diversity of the fleet.
 

@@ -1,5 +1,5 @@
 site_name: PowerGenome Tools
-site_description: Documentation for PowerGenome clustering tools and web application.
+site_description: Documentation for the PowerGenome Design Wizard - a comprehensive web-based interface for building PowerGenome settings files.
 site_url: https://gschivley.github.io/PowerGenome-tools/
 
 theme:

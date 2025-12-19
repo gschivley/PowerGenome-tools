@@ -1,6 +1,8 @@
 # Clustering Algorithms
 
-The PowerGenome tools use several algorithms to aggregate Balancing Authorities (BAs) into model regions. The goal is to reduce the computational complexity of transmission modeling while preserving the most critical transmission constraints.
+The PowerGenome Design Wizard uses several clustering algorithms in **Step 1 (Regions)** to aggregate Balancing Authorities (BAs) into model regions. The goal is to reduce the computational complexity of transmission modeling while preserving the most critical transmission constraints.
+
+For context on how these algorithms fit into the overall workflow, see the [Web Application documentation](web_app.md).
 
 ## Core Concepts
 
