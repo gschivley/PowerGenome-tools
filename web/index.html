@@ -848,14 +848,16 @@
                     <label style="font-size: 12px; margin-top: 8px;">UTC Offset</label>
                     <input id="utcOffset" type="number" value="-5" min="-12" max="14" step="1" />
 
-                    <label style="font-size: 12px; margin-top: 8px;">Model Years (comma-separated)</label>
-                    <input id="modelYears" type="text" value="2030" />
+                    <label style="font-size: 12px; margin-top: 8px;">Planning Years (comma-separated)</label>
+                    <input id="modelYears" type="text" placeholder="e.g., 2030, 2040, 2050" />
 
-                    <label style="font-size: 12px; margin-top: 8px;">First Planning Years (comma-separated)</label>
-                    <input id="planningYears" type="text" value="2025" />
+                    <label style="font-size: 12px; margin-top: 8px;">Planning Period Start (comma-separated)</label>
+                    <input id="planningYears" type="text" placeholder="e.g., 2026, 2031, 2041" />
                     <div style="font-size: 11px; color: #666; margin-top: 4px;">
                         Provide the same number of values for model years and first planning years.
                     </div>
+                    <div id="yearsValidationError"
+                        style="font-size: 12px; color: #d32f2f; margin-top: 4px; display: none;"></div>
                 </div>
 
                 <div class="step-footer">
@@ -1348,6 +1350,50 @@ wacc_real: 0.05"></textarea>
             row.style.display = (cls.value === 'THERM') ? 'block' : 'none';
         }
 
+        function validateModelYears() {
+            const modelYearsInput = document.getElementById('modelYears');
+            const planningYearsInput = document.getElementById('planningYears');
+            const errorDiv = document.getElementById('yearsValidationError');
+
+            if (!modelYearsInput || !planningYearsInput || !errorDiv) return;
+
+            const modelYearsText = modelYearsInput.value.trim();
+            const planningYearsText = planningYearsInput.value.trim();
+
+            // Parse comma/space-separated integers
+            function parseIntList(text) {
+                if (!text) return [];
+                const tokens = text.split(/[\s,]+/).filter(t => t.length > 0);
+                return tokens.map(t => parseInt(t, 10)).filter(n => !isNaN(n));
+            }
+
+            const modelYears = parseIntList(modelYearsText);
+            const planningYears = parseIntList(planningYearsText);
+
+            if (modelYears.length === 0 || planningYears.length === 0) {
+                errorDiv.style.display = 'none';
+                return;
+            }
+
+            if (modelYears.length !== planningYears.length) {
+                errorDiv.textContent = `Error: Model years (${modelYears.length}) and planning years (${planningYears.length}) must have the same number of values.`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Check that each planning year is <= the corresponding model year
+            for (let i = 0; i < modelYears.length; i++) {
+                if (planningYears[i] > modelYears[i]) {
+                    errorDiv.textContent = `Error: Planning year at position ${i + 1} (${planningYears[i]}) must be less than or equal to model year (${modelYears[i]}).`;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+            }
+
+            // All validations passed
+            errorDiv.style.display = 'none';
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('autoOptimize').addEventListener('change', toggleAutoOptimize);
 
@@ -1357,6 +1403,12 @@ wacc_real: 0.05"></textarea>
             if (cls) cls.addEventListener('change', toggleCommitRow);
             toggleModFuelType();
             toggleCommitRow();
+
+            // Add validation for model years and planning years
+            const modelYearsInput = document.getElementById('modelYears');
+            const planningYearsInput = document.getElementById('planningYears');
+            if (modelYearsInput) modelYearsInput.addEventListener('input', validateModelYears);
+            if (planningYearsInput) planningYearsInput.addEventListener('input', validateModelYears);
         });
 
         // Sidebar Resizer for Step 1
