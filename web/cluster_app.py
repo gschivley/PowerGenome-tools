@@ -3561,7 +3561,9 @@ def on_add_modified_resource(event):
             overlap = reserved_keys & set(parsed.keys())
             if overlap:
                 set_status(
-                    f"Attribute modifiers cannot redefine: {', '.join(sorted(overlap))}",
+                    "Attribute modifiers cannot change core resource identity fields. "
+                    "These fields are managed automatically by the resource definition; "
+                    "please use different keys for custom attributes.",
                     "error",
                 )
                 return
