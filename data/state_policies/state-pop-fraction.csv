@@ -1,0 +1,135 @@
+﻿region,st,rto,interconne,country,custreg,total_population,state_population,frac_of_state_pop
+p1,wa,rto1,wscc,usa,Pacific,5253695,7857320,0.668637016
+p10,ca,rto4,wscc,usa,Pacific,20033558,39198693,0.511077193
+p100,va,rto7,eastern,usa,Southeast,247982,8734685,0.028390491
+p101,fl,rto16,eastern,usa,Southeast,14059553,22904868,0.613823795
+p102,fl,rto16,eastern,usa,Southeast,7692136,22904868,0.335829746
+p103,mi,rto6,eastern,usa,Great Lakes,9236351,10083356,0.915999693
+p104,mi,rto7,eastern,usa,Great Lakes,604481,10083356,0.059948394
+p105,in,rto6,eastern,usa,Great Lakes,3635000,6880131,0.528332963
+p106,in,rto6,eastern,usa,Great Lakes,1348242,6880131,0.195961676
+p107,in,rto6,eastern,usa,Great Lakes,1896889,6880131,0.275705361
+p108,ky,rto6,eastern,usa,Southeast,360646,4550595,0.079252493
+p109,ky,rto7,eastern,usa,Southeast,3215570,4550595,0.706626276
+p11,ca,rto4,wscc,usa,Pacific,3285890,39198693,0.083826519
+p110,ky,rto7,eastern,usa,Southeast,275879,4550595,0.060624819
+p111,oh,rto7,eastern,usa,Great Lakes,4539630,11824034,0.383932421
+p112,oh,rto7,eastern,usa,Great Lakes,4440322,11824034,0.375533595
+p113,oh,rto7,eastern,usa,Great Lakes,1107315,11824034,0.093649511
+p114,oh,rto7,eastern,usa,Great Lakes,1736767,11824034,0.146884473
+p115,pa,rto7,eastern,usa,Northeast,2379409,13017721,0.182782301
+p116,wv,rto7,eastern,usa,Southeast,1083787,1770495,0.612137848
+p117,wv,rto7,eastern,usa,Southeast,686708,1770495,0.387862152
+p118,va,rto7,eastern,usa,Southeast,1149896,8734685,0.131647106
+p119,pa,rto12,eastern,usa,Northeast,247582,13017721,0.019018844
+p12,nv,rto2,wscc,usa,Pacific,860078,3214363,0.267573389
+p120,pa,rto7,eastern,usa,Northeast,172564,13017721,0.013256084
+p121,md,rto7,eastern,usa,Southeast,546068,6217062,0.087833771
+p122,pa,rto12,eastern,usa,Northeast,10218166,13017721,0.784942771
+p123,md,rto12,eastern,usa,Southeast,5670994,6217062,0.912166229
+p124,va,rto12,eastern,usa,Southeast,45314,8734685,0.005187823
+p125,de,rto12,eastern,usa,Southeast,1036423,1036423,1
+p126,nj,rto12,eastern,usa,Northeast,9379642,9379642,1
+p127,ny,rto17,eastern,usa,Northeast,16822286,19737367,0.852306491
+p128,ny,rto17,eastern,usa,Northeast,2915081,19737367,0.147693509
+p129,vt,rto18,eastern,usa,Northeast,648708,648708,1
+p13,nv,rto3,wscc,usa,Southwest,2354285,3214363,0.732426611
+p130,nh,rto18,eastern,usa,Northeast,1402199,1402199,1
+p131,ma,rto18,eastern,usa,Northeast,7066568,7066568,1
+p132,ct,rto18,eastern,usa,Northeast,3643023,3643023,1
+p133,ri,rto18,eastern,usa,Northeast,1103429,1103429,1
+p134,me,rto18,eastern,usa,Northeast,1399646,1399646,1
+p14,id,rto1,wscc,usa,Southwest,350432,1971122,0.177783009
+p15,id,rto1,wscc,usa,Mountain,1067150,1971122,0.541392161
+p16,id,rto1,wscc,usa,Mountain,553540,1971122,0.28082483
+p17,mt,rto1,wscc,usa,Southwest,454022,1131302,0.401326967
+p18,mt,rto2,wscc,usa,Mountain,408999,1131302,0.361529459
+p19,mt,rto2,wscc,usa,Mountain,8691,1131302,0.007682299
+p2,wa,rto1,wscc,usa,Pacific,1608028,7857320,0.204653495
+p20,mt,rto2,wscc,usa,Mountain,204118,1131302,0.180427507
+p21,wy,rto2,wscc,usa,Mountain,210351,585067,0.359533182
+p22,wy,rto2,wscc,usa,Mountain,41373,585067,0.070714978
+p23,wy,rto5,wscc,usa,Mountain,61935,585067,0.105859671
+p24,wy,rto5,wscc,usa,Mountain,271408,585067,0.46389217
+p25,ut,rto2,wscc,usa,Mountain,3287884,3443222,0.95488586
+p26,ut,rto2,wscc,usa,Southwest,155338,3443222,0.04511414
+p27,az,rto3,wscc,usa,Southwest,223801,7473027,0.029947838
+p28,az,rto3,wscc,usa,Southwest,6065879,7473027,0.811703076
+p29,az,rto3,wscc,usa,Southwest,65121,7473027,0.00871414
+p3,wa,rto1,wscc,usa,Pacific,847499,7857320,0.107861077
+p30,az,rto3,wscc,usa,Southwest,1118226,7473027,0.149634947
+p31,nm,rto3,wscc,usa,Mountain,1848586,2121164,0.871496028
+p32,sd,rto5,wscc,usa,South Central,171294,918305,0.186532797
+p33,co,rto5,wscc,usa,Mountain,4543313,5901339,0.769878328
+p34,co,rto5,wscc,usa,Mountain,1358026,5901339,0.230121672
+p35,mt,rto11,eastern,usa,Great Plains,55472,1131302,0.049033768
+p36,nd,rto11,eastern,usa,Mountain,281896,789047,0.357261355
+p37,nd,rto11,eastern,usa,Great Plains,507151,789047,0.642738645
+p38,sd,rto11,eastern,usa,Great Plains,747011,918305,0.813467203
+p39,ne,rto8,eastern,usa,Great Plains,99670,1987864,0.050139245
+p4,wa,rto1,wscc,usa,Pacific,148098,7857320,0.018848411
+p40,ne,rto8,eastern,usa,Great Plains,599318,1987864,0.301488432
+p41,ne,rto8,eastern,usa,Great Plains,1288876,1987864,0.648372323
+p42,mn,rto11,eastern,usa,Great Plains,260492,5753048,0.045278955
+p43,mn,rto11,eastern,usa,Great Plains,5028018,5753048,0.87397463
+p44,mn,rto11,eastern,usa,Great Plains,138190,5753048,0.024020311
+p45,ia,rto6,eastern,usa,Great Lakes,696371,3218414,0.216370858
+p46,wi,rto11,eastern,usa,Great Plains,845846,5930405,0.142628707
+p47,nm,rto8,eastern,usa,Southwest,272578,2121164,0.128503972
+p48,tx,rto8,eastern,usa,South Central,880447,30727890,0.028653025
+p49,ok,rto8,eastern,usa,South Central,27752,4063882,0.006828938
+p5,or,rto1,wscc,usa,Pacific,3608778,4253653,0.848395015
+p50,ok,rto8,eastern,usa,South Central,2679495,4063882,0.659343701
+p51,ok,rto8,eastern,usa,South Central,1356635,4063882,0.33382736
+p52,ks,rto8,eastern,usa,Great Plains,112118,2951500,0.037986786
+p53,ks,rto8,eastern,usa,Great Plains,2839382,2951500,0.962013214
+p54,mo,rto8,eastern,usa,Great Plains,1645344,6208038,0.26503446
+p55,mo,rto8,eastern,usa,Great Plains,1000461,6208038,0.161155747
+p56,ar,rto8,eastern,usa,South Central,1049759,3069463,0.342000865
+p57,tx,rto8,eastern,usa,South Central,450426,30727890,0.01465854
+p58,la,rto13,eastern,usa,South Central,4255531,4588071,0.927520738
+p59,tx,rto3,wscc,usa,Southwest,874836,30727890,0.028470422
+p6,or,rto1,wscc,usa,Pacific,579951,4253653,0.136341869
+p60,tx,rto10,texas,usa,South Central,158714,30727890,0.005165145
+p61,tx,rto10,texas,usa,South Central,418489,30727890,0.013619191
+p62,tx,rto10,texas,usa,South Central,398243,30727890,0.012960311
+p63,tx,rto10,texas,usa,South Central,10724790,30727890,0.349024616
+p64,tx,rto10,texas,usa,South Central,3776144,30727890,0.122889792
+p65,tx,rto10,texas,usa,South Central,4904341,30727890,0.159605524
+p66,tx,rto13,eastern,usa,South Central,1546882,30727890,0.050341302
+p67,tx,rto10,texas,usa,South Central,6594578,30727890,0.214612132
+p68,mn,rto11,eastern,usa,Great Plains,326348,5753048,0.056726104
+p69,ia,rto6,eastern,usa,Great Plains,320826,3218414,0.099684503
+p7,or,rto1,wscc,usa,Pacific,64924,4253653,0.015263116
+p70,ia,rto6,eastern,usa,Great Plains,2201217,3218414,0.683944639
+p71,mo,rto6,eastern,usa,Great Plains,122873,6208038,0.019792566
+p72,mo,rto6,eastern,usa,Great Plains,2885840,6208038,0.464855402
+p73,mo,rto13,eastern,usa,Great Plains,184273,6208038,0.029682969
+p74,mi,rto6,eastern,usa,Great Lakes,242524,10083356,0.024051913
+p75,wi,rto6,eastern,usa,Great Lakes,820895,5930405,0.138421406
+p76,wi,rto6,eastern,usa,Great Lakes,948918,5930405,0.160008971
+p77,wi,rto11,eastern,usa,Great Lakes,290493,5930405,0.04898367
+p78,wi,rto6,eastern,usa,Great Lakes,781116,5930405,0.13171377
+p79,wi,rto6,eastern,usa,Great Lakes,2243137,5930405,0.378243476
+p8,ca,rto2,wscc,usa,Pacific,80345,39198693,0.002049686
+p80,il,rto7,eastern,usa,Great Lakes,9420169,12642259,0.745133366
+p81,il,rto6,eastern,usa,Great Lakes,1717975,12642259,0.135891457
+p82,il,rto6,eastern,usa,Great Lakes,580331,12642259,0.045904059
+p83,il,rto6,eastern,usa,Great Lakes,923784,12642259,0.073071118
+p84,mo,rto13,eastern,usa,Great Plains,369247,6208038,0.059478856
+p85,ar,rto13,eastern,usa,South Central,2019704,3069463,0.657999135
+p86,la,rto13,eastern,usa,South Central,332540,4588071,0.072479262
+p87,ms,rto13,eastern,usa,Southeast,2289809,2943172,0.778007198
+p88,ms,rto14,eastern,usa,Southeast,653363,2943172,0.221992802
+p89,al,rto14,eastern,usa,Southeast,2601313,5117673,0.508299964
+p9,ca,rto4,wscc,usa,Pacific,15798900,39198693,0.403046602
+p90,al,rto9,eastern,usa,Southeast,2516360,5117673,0.491700036
+p91,fl,rto9,eastern,usa,Southeast,1153179,22904868,0.050346459
+p92,tn,rto14,eastern,usa,Southeast,7148304,7148304,1
+p93,ky,rto14,eastern,usa,Southeast,698500,4550595,0.153496411
+p94,ga,rto9,eastern,usa,Southeast,11064432,11064432,1
+p95,sc,rto15,eastern,usa,Southeast,2036998,5387830,0.378073918
+p96,sc,rto15,eastern,usa,Southeast,3350832,5387830,0.621926082
+p97,nc,rto15,eastern,usa,Southeast,5485996,10881189,0.504172476
+p98,nc,rto15,eastern,usa,Southeast,5395193,10881189,0.495827524
+p99,va,rto7,eastern,usa,Southeast,7291493,8734685,0.83477458
