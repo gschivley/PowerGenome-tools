@@ -12,6 +12,7 @@ import asyncio
 import html
 import json
 import math
+import re
 import warnings
 from io import StringIO
 
@@ -69,8 +70,146 @@ class AppState:
         self.omit_selected = set()  # technologies to omit (dual-list UI)
         self.omit_available = set()  # technologies available to include
 
+        # Settings generation (Settings tab)
+        self.settings_yamls = {}  # filename -> yaml string
+        self.modified_new_resources = {}  # key -> metadata + schema for resources.yml
+        self.atb_options = []  # list[dict] loaded from web/data/atb_options.json
+        self.atb_index = {}  # year -> tech -> detail -> sorted(list(cost_case))
+        self.atb_years = []  # sorted list of years
+        self.plant_cluster_settings = (
+            None  # parsed YAML dict from plant clustering output
+        )
+
+        # Fuel scenario options (Settings tab)
+        self.fuel_prices_df = None  # fuel price scenarios from PowerGenome-data
+        self.fuel_scenario_index = {}  # data_year -> fuel -> sorted(list(scenario))
+
 
 state = AppState()
+
+
+SETTINGS_FILENAMES = [
+    "model_definition.yml",
+    "resources.yml",
+    "fuels.yml",
+    "transmission.yml",
+    "distributed_gen.yml",
+    "resource_tags.yml",
+    "startup_costs.yml",
+]
+
+
+FUEL_PRICES_URLS = [
+    # Prefer local copy if present
+    "./data/fuel_prices.csv",
+    # Fallback to PowerGenome-data (raw content; should be CORS-friendly)
+    "https://raw.githubusercontent.com/gschivley/PowerGenome-data/main/data/fuel_prices.csv",
+]
+
+
+DEFAULT_RENEWABLES_CLUSTERS = [
+    {
+        "region": "all",
+        "technology": "landbasedwind",
+        "filter": [{"feature": "lcoe", "max": 75}],
+        "bin": [{"feature": "lcoe", "weights": "capacity_mw", "mw_per_bin": 25000}],
+        "cluster": [{"feature": "cf", "n_clusters": 2}],
+    },
+    {
+        "region": "all",
+        "technology": "utilitypv",
+        "filter": [{"feature": "lcoe", "max": 40}],
+        "bin": [{"feature": "lcoe", "weights": "capacity_mw", "mw_per_bin": 50000}],
+    },
+]
+
+
+DEFAULT_GENERATOR_COLUMNS = [
+    "region",
+    "Resource",
+    "technology",
+    "cluster",
+    "R_ID",
+    "Zone",
+    "Num_VRE_Bins",
+    "CapRes_1",
+    "CapRes_2",
+    "THERM",
+    "VRE",
+    "MUST_RUN",
+    "STOR",
+    "FLEX",
+    "LDS",
+    "HYDRO",
+    "ESR_1",
+    "ESR_2",
+    "MinCapTag_1",
+    "MinCapTag_2",
+    "Min_Share",
+    "Max_Share",
+    "Existing_Cap_MWh",
+    "Existing_Cap_MW",
+    "Existing_Charge_Cap_MW",
+    "num_units",
+    "unmodified_existing_cap_mw",
+    "New_Build",
+    "Cap_Size",
+    "Min_Cap_MW",
+    "Max_Cap_MW",
+    "Max_Cap_MWh",
+    "Min_Cap_MWh",
+    "Max_Charge_Cap_MW",
+    "Min_Charge_Cap_MW",
+    "Min_Share_percent",
+    "Max_Share_percent",
+    "capex_mw",
+    "Inv_Cost_per_MWyr",
+    "Fixed_OM_Cost_per_MWyr",
+    "capex_mwh",
+    "Inv_Cost_per_MWhyr",
+    "Fixed_OM_Cost_per_MWhyr",
+    "Var_OM_Cost_per_MWh",
+    "Var_OM_Cost_per_MWh_In",
+    "Inv_Cost_Charge_per_MWyr",
+    "Fixed_OM_Cost_Charge_per_MWyr",
+    "Start_Cost_per_MW",
+    "Start_Fuel_MMBTU_per_MW",
+    "Heat_Rate_MMBTU_per_MWh",
+    "heat_rate_mmbtu_mwh_iqr",
+    "heat_rate_mmbtu_mwh_std",
+    "Fuel",
+    "Min_Power",
+    "Self_Disch",
+    "Eff_Up",
+    "Eff_Down",
+    "Hydro_Energy_to_Power_Ratio",
+    "Ratio_power_to_energy",
+    "Min_Duration",
+    "Max_Duration",
+    "Max_Flexible_Demand_Delay",
+    "Max_Flexible_Demand_Advance",
+    "Flexible_Demand_Energy_Eff",
+    "Ramp_Up_Percentage",
+    "Ramp_Dn_Percentage",
+    "Up_Time",
+    "Down_Time",
+    "NACC_Eff",
+    "NACC_Peak_to_Base",
+    "Reg_Max",
+    "Rsv_Max",
+    "Reg_Cost",
+    "Rsv_Cost",
+    "spur_miles",
+    "spur_capex",
+    "offshore_spur_miles",
+    "offshore_spur_capex",
+    "tx_miles",
+    "tx_capex",
+    "interconnect_annuity",
+    "Min_Retired_Cap_MW",
+    "Min_Retired_Energy_Cap_MW",
+    "Min_Retired_Charge_Cap_MW",
+]
 GROUP_OUTLINE_COLORS = [
     "#1b9e77",
     "#d95f02",
@@ -354,6 +493,11 @@ async def init_map():
 
     # Create map centered on US
     state.map = L.map("map").setView(to_js([39.8, -98.5]), 4)
+    # Expose map on window for resize/invalidate hooks
+    try:
+        window.appMap = state.map
+    except Exception:
+        pass
 
     # Add tile layer
     L.tileLayer(
@@ -2839,6 +2983,11 @@ def on_run_plant_clustering(event):
             omit_tokens=omit_tokens,
             group_map=active_group_map,
         )
+
+        try:
+            state.plant_cluster_settings = yaml.safe_load(yaml_str)
+        except Exception:
+            state.plant_cluster_settings = None
     except Exception as exc:
         set_status(f"Plant clustering error: {exc}", "error")
         result_el = document.getElementById("plantResultText")
@@ -2866,6 +3015,1175 @@ def on_run_plant_clustering(event):
         f"Plant clustering ready: {total_clusters} clusters across techs{note}.",
         "success",
     )
+
+
+# =========================================================================
+# Settings Generation (Settings tab)
+# =========================================================================
+
+
+async def load_atb_options():
+    """Load ATB new-build options index (if present).
+
+    Expected to live at web/data/atb_options.json. This is designed to be regenerated
+    offline from technology_costs_atb.parquet; the web app only consumes the index.
+    """
+    try:
+        response = await fetch("./data/atb_options.json")
+        if not response.ok:
+            state.atb_options = []
+            state.atb_index = {}
+            state.atb_years = []
+            return
+
+        txt = await response.text()
+        payload = json.loads(txt)
+        options = payload.get("options", []) if isinstance(payload, dict) else []
+
+        # Normalize to list of dicts containing at least data_year/technology/tech_detail/cost_case
+        normalized = []
+        for row in options:
+            if not isinstance(row, dict):
+                continue
+            if not all(
+                k in row
+                for k in ("data_year", "technology", "tech_detail", "cost_case")
+            ):
+                continue
+            normalized.append(row)
+
+        state.atb_options = normalized
+        years = sorted(
+            {
+                int(r["data_year"])
+                for r in normalized
+                if str(r.get("data_year", "")).isdigit()
+            }
+        )
+        state.atb_years = years
+
+        idx = {}
+        for r in normalized:
+            try:
+                year = int(r["data_year"])
+            except Exception:
+                continue
+            tech = str(r.get("technology", "")).strip()
+            detail = str(r.get("tech_detail", "")).strip()
+            case = str(r.get("cost_case", "")).strip()
+            if not tech or not detail or not case:
+                continue
+            idx.setdefault(year, {}).setdefault(tech, {}).setdefault(detail, set()).add(
+                case
+            )
+
+        # Convert sets to sorted lists
+        state.atb_index = {
+            y: {
+                t: {d: sorted(list(cases)) for d, cases in details.items()}
+                for t, details in techs.items()
+            }
+            for y, techs in idx.items()
+        }
+    except Exception:
+        state.atb_options = []
+        state.atb_index = {}
+        state.atb_years = []
+
+
+async def load_fuel_prices():
+    """Load fuel scenario options for the Settings tab.
+
+    Tries a local `./data/fuel_prices.csv` first, then falls back to PowerGenome-data.
+    Only scenario availability is used (data_year/fuel/scenario), not prices.
+    """
+    for url in FUEL_PRICES_URLS:
+        try:
+            response = await fetch(url)
+            if not response.ok:
+                continue
+            txt = await response.text()
+            if txt.startswith("<!"):
+                continue
+            df = pd.read_csv(StringIO(txt))
+            # Must include these columns
+            required = {"data_year", "fuel", "scenario"}
+            if not required.issubset({c.lower() for c in df.columns}):
+                # Normalize case then check
+                lower_map = {c.lower(): c for c in df.columns}
+                if not required.issubset(set(lower_map.keys())):
+                    continue
+                df = df.rename(
+                    columns={
+                        lower_map["data_year"]: "data_year",
+                        lower_map["fuel"]: "fuel",
+                        lower_map["scenario"]: "scenario",
+                    }
+                )
+            else:
+                # Normalize to expected names while preserving existing casing
+                lower_map = {c.lower(): c for c in df.columns}
+                df = df.rename(
+                    columns={
+                        lower_map.get("data_year", "data_year"): "data_year",
+                        lower_map.get("fuel", "fuel"): "fuel",
+                        lower_map.get("scenario", "scenario"): "scenario",
+                    }
+                )
+
+            df["data_year"] = pd.to_numeric(df["data_year"], errors="coerce").astype(
+                "Int64"
+            )
+            df["fuel"] = df["fuel"].astype(str).str.strip()
+            df["scenario"] = df["scenario"].astype(str).str.strip()
+            df = df.dropna(subset=["data_year"])
+            df = df[(df["fuel"] != "") & (df["scenario"] != "")]
+
+            state.fuel_prices_df = df
+            state.fuel_scenario_index = build_fuel_scenario_index(df)
+            return
+        except Exception:
+            continue
+
+    state.fuel_prices_df = None
+    state.fuel_scenario_index = {}
+
+
+def build_fuel_scenario_index(df: pd.DataFrame) -> dict:
+    """Build index: data_year -> fuel -> sorted scenarios."""
+    idx: dict[int, dict[str, list[str]]] = {}
+    if df is None or df.empty:
+        return idx
+
+    for (data_year, fuel), sub in df.groupby(["data_year", "fuel"]):
+        try:
+            y = int(data_year)
+        except Exception:
+            continue
+        scenarios = sorted(
+            set(sub["scenario"].dropna().astype(str).str.strip().tolist())
+        )
+        scenarios = [s for s in scenarios if s]
+        if not scenarios:
+            continue
+        idx.setdefault(y, {})[str(fuel)] = scenarios
+
+    return idx
+
+
+def _set_select_options_simple(
+    select_el, values, *, selected_value=None, empty_label=None
+):
+    if not select_el:
+        return
+    vals = [str(v) for v in (values or []) if str(v).strip()]
+    if not vals and empty_label:
+        vals = [empty_label]
+    if selected_value is None and vals:
+        selected_value = vals[0]
+
+    parts = []
+    for v in vals:
+        sel = "selected" if str(v) == str(selected_value) else ""
+        parts.append(
+            f"<option value='{html.escape(str(v))}' {sel}>{html.escape(str(v))}</option>"
+        )
+    select_el.innerHTML = "".join(parts)
+
+
+def _default_scenario_for_fuel(fuel: str, scenarios: list[str]) -> str | None:
+    scenarios_set = {str(s) for s in (scenarios or [])}
+    if fuel == "coal" and "no_111d" in scenarios_set:
+        return "no_111d"
+    if "reference" in scenarios_set:
+        return "reference"
+    return scenarios[0] if scenarios else None
+
+
+def populate_fuel_scenario_selects(event=None):
+    """Populate the Fuel Scenarios selects based on the selected fuel data year."""
+    year_el = document.getElementById("fuelDataYear")
+    help_el = document.getElementById("fuelScenarioHelp")
+
+    coal_el = document.getElementById("fuelScenarioCoal")
+    gas_el = document.getElementById("fuelScenarioNaturalGas")
+    dist_el = document.getElementById("fuelScenarioDistillate")
+    ura_el = document.getElementById("fuelScenarioUranium")
+
+    try:
+        selected_year = int(_get_select_value(year_el, 0) or 0)
+    except Exception:
+        selected_year = 0
+
+    if not state.fuel_scenario_index or selected_year not in state.fuel_scenario_index:
+        # Fallback: just offer 'reference'
+        _set_select_options_simple(coal_el, ["reference"], selected_value="reference")
+        _set_select_options_simple(gas_el, ["reference"], selected_value="reference")
+        _set_select_options_simple(dist_el, ["reference"], selected_value="reference")
+        _set_select_options_simple(ura_el, ["reference"], selected_value="reference")
+        if help_el:
+            help_el.textContent = (
+                "Fuel scenario options not available for this year; using 'reference'."
+            )
+        return
+
+    year_map = state.fuel_scenario_index.get(selected_year, {})
+
+    def set_for(fuel_key: str, select_el):
+        scenarios = year_map.get(fuel_key, ["reference"])
+        current = _get_select_value(select_el, None)
+        default_val = _default_scenario_for_fuel(fuel_key, scenarios)
+        chosen = current if current in scenarios else default_val
+        _set_select_options_simple(select_el, scenarios, selected_value=chosen)
+
+    set_for("coal", coal_el)
+    set_for("naturalgas", gas_el)
+    set_for("distillate", dist_el)
+    set_for("uranium", ura_el)
+
+    if help_el:
+        # Inform about coal default if relevant
+        coal_scenarios = year_map.get("coal", [])
+        if "no_111d" in set(coal_scenarios):
+            help_el.textContent = (
+                "Coal defaults to 'no_111d' for this year (available)."
+            )
+        else:
+            help_el.textContent = (
+                "Coal 'no_111d' not available for this year; defaulting to 'reference'."
+            )
+
+
+def populate_fuel_data_year_select(event=None):
+    """Populate the Fuel Data Year dropdown from loaded fuel_prices.csv."""
+    year_el = document.getElementById("fuelDataYear")
+    if not year_el:
+        return
+
+    # Gather available years from loaded index
+    if not state.fuel_scenario_index:
+        # Fallback to a reasonable default when fuel_prices.csv can't be loaded
+        _set_select_options_simple(year_el, [2025], selected_value="2025")
+        return
+
+    years = sorted(state.fuel_scenario_index.keys())
+    current = _get_select_value(year_el, None)
+
+    # Choose a default: keep current if valid; else prefer 2025 if present; else latest.
+    selected = None
+    try:
+        current_int = int(current) if current is not None else None
+    except Exception:
+        current_int = None
+
+    if current_int in years:
+        selected = current_int
+    elif 2025 in years:
+        selected = 2025
+    elif years:
+        selected = years[-1]
+
+    _set_select_options_simple(
+        year_el, years, selected_value=str(selected) if selected is not None else None
+    )
+
+
+def _set_select_options(select_el, values, *, selected_value=None):
+    if not select_el:
+        return
+    safe_values = [str(v) for v in values]
+    if selected_value is None and safe_values:
+        selected_value = safe_values[0]
+    parts = []
+    for v in safe_values:
+        sel = "selected" if v == str(selected_value) else ""
+        parts.append(
+            f"<option value='{html.escape(v)}' {sel}>{html.escape(v)}</option>"
+        )
+    select_el.innerHTML = "".join(parts)
+
+
+def _get_select_value(el, default=None):
+    if not el:
+        return default
+    try:
+        return el.value
+    except Exception:
+        return default
+
+
+def populate_atb_picker():
+    """Populate the ATB picker selects in the Settings tab."""
+    year_el = document.getElementById("atbYearSelect")
+    tech_el = document.getElementById("atbTechSelect")
+    detail_el = document.getElementById("atbTechDetailSelect")
+    case_el = document.getElementById("atbCostCaseSelect")
+
+    if not (year_el and tech_el and detail_el and case_el):
+        return
+
+    years = state.atb_years
+    if not years:
+        _set_select_options(year_el, ["(no ATB index found)"])
+        _set_select_options(tech_el, [])
+        _set_select_options(detail_el, [])
+        _set_select_options(case_el, [])
+        return
+
+    latest_year = max(years)
+    selected_year = int(_get_select_value(year_el, latest_year) or latest_year)
+    if selected_year not in state.atb_index:
+        selected_year = latest_year
+
+    _set_select_options(year_el, years, selected_value=str(selected_year))
+
+    techs = sorted(state.atb_index.get(selected_year, {}).keys())
+    selected_tech = _get_select_value(tech_el, techs[0] if techs else None)
+    if selected_tech not in techs and techs:
+        selected_tech = techs[0]
+    _set_select_options(tech_el, techs, selected_value=selected_tech)
+
+    details = sorted(
+        state.atb_index.get(selected_year, {}).get(selected_tech, {}).keys()
+    )
+    selected_detail = _get_select_value(detail_el, details[0] if details else None)
+    if selected_detail not in details and details:
+        selected_detail = details[0]
+    _set_select_options(detail_el, details, selected_value=selected_detail)
+
+    cases = (
+        state.atb_index.get(selected_year, {})
+        .get(selected_tech, {})
+        .get(selected_detail, [])
+    )
+    selected_case = _get_select_value(case_el, cases[0] if cases else None)
+    if selected_case not in cases and cases:
+        selected_case = cases[0]
+    _set_select_options(case_el, cases, selected_value=selected_case)
+
+
+def on_atb_picker_change(event=None):
+    populate_atb_picker()
+
+
+def parse_int_list(text):
+    """Parse comma/space-separated integers."""
+    if text is None:
+        return []
+    raw = re.split(r"[\s,]+", str(text).strip())
+    out = []
+    for tok in raw:
+        if not tok:
+            continue
+        out.append(int(tok))
+    return out
+
+
+def parse_new_resources_text(text):
+    """Parse manual new_resources lines.
+
+    Each non-empty line should be: Technology | Tech Detail | Cost Case | Size
+    """
+    if not text:
+        return []
+    items = []
+    for line in str(text).splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) != 4:
+            continue
+        tech, detail, case, size = parts
+        if not tech or not detail or not case or not size:
+            continue
+        try:
+            size_val = int(float(size))
+        except Exception:
+            continue
+        items.append([tech, detail, case, size_val])
+    return items
+
+
+def render_new_resources_list():
+    container = document.getElementById("newResourcesList")
+    raw_el = document.getElementById("newResourcesRaw")
+    if not container or not raw_el:
+        return
+
+    items = parse_new_resources_text(raw_el.value)
+    if not items:
+        container.innerHTML = "<em>No new-build resources selected yet.</em>"
+        return
+
+    parts = []
+    for tech, detail, case, size in items:
+        parts.append(
+            f"<div class='candidate-item'><strong>{html.escape(str(tech))}</strong> — {html.escape(str(detail))} — {html.escape(str(case))} — {int(size)} MW</div>"
+        )
+    container.innerHTML = "".join(parts)
+
+
+def on_add_new_resource(event):
+    raw_el = document.getElementById("newResourcesRaw")
+    if not raw_el:
+        return
+
+    year_el = document.getElementById("atbYearSelect")
+    tech_el = document.getElementById("atbTechSelect")
+    detail_el = document.getElementById("atbTechDetailSelect")
+    case_el = document.getElementById("atbCostCaseSelect")
+    size_el = document.getElementById("atbSizeMw")
+
+    tech = _get_select_value(tech_el, "").strip()
+    detail = _get_select_value(detail_el, "").strip()
+    case = _get_select_value(case_el, "").strip()
+    try:
+        size = int(float(_get_select_value(size_el, 1)))
+    except Exception:
+        size = 1
+
+    if not tech or not detail or not case:
+        set_status("ATB index not available; add manually below.", "error")
+        return
+
+    line = f"{tech} | {detail} | {case} | {size}"
+    existing = raw_el.value.strip()
+    raw_el.value = (existing + "\n" + line).strip() if existing else line
+    render_new_resources_list()
+
+
+def render_modified_resources_list():
+    container = document.getElementById("modifiedResourcesList")
+    if not container:
+        return
+    if not state.modified_new_resources:
+        container.innerHTML = "<em>No modified resources added yet.</em>"
+        return
+
+    parts = []
+    for key in sorted(state.modified_new_resources.keys()):
+        item = state.modified_new_resources[key]
+        new_tech = item.get("new_technology")
+        fuel_desc = item.get("fuel_desc", "")
+        tag_class = item.get("tag_class", "")
+        try:
+            n_mods = len(item.get("attr_modifiers") or {})
+        except Exception:
+            n_mods = 0
+        parts.append(
+            f"<div class='candidate-item'><strong>{html.escape(key)}</strong> — {html.escape(str(new_tech))} — {html.escape(str(tag_class))} — {html.escape(str(fuel_desc))} — {n_mods} modifiers</div>"
+        )
+    container.innerHTML = "".join(parts)
+
+
+def on_clear_modified_resources(event):
+    state.modified_new_resources = {}
+    render_modified_resources_list()
+
+
+def _prefix_from_new_technology(new_technology):
+    t = str(new_technology).strip()
+    if not t:
+        return ""
+    if t.endswith("_"):
+        return t
+    return f"{t}_"
+
+
+def on_add_modified_resource(event):
+    name_el = document.getElementById("modResName")
+    base_tech_el = document.getElementById("modBaseTech")
+    base_detail_el = document.getElementById("modBaseTechDetail")
+    base_case_el = document.getElementById("modBaseCostCase")
+    base_size_el = document.getElementById("modBaseSizeMw")
+    new_tech_el = document.getElementById("modNewTech")
+    new_detail_el = document.getElementById("modNewTechDetail")
+    new_case_el = document.getElementById("modNewCostCase")
+
+    attr_mods_el = document.getElementById("modAttrModifiers")
+
+    fuel_type_el = document.getElementById("modFuelType")
+    std_fuel_el = document.getElementById("modStandardFuel")
+    new_fuel_name_el = document.getElementById("modNewFuelName")
+    new_fuel_price_el = document.getElementById("modNewFuelPrice")
+    new_fuel_ef_el = document.getElementById("modNewFuelEf")
+
+    tag_class_el = document.getElementById("modTagClass")
+    is_commit_el = document.getElementById("modIsCommit")
+
+    key = str(_get_select_value(name_el, "")).strip()
+    if not key:
+        set_status("Modified resource needs a name/key.", "error")
+        return
+
+    base_tech = str(_get_select_value(base_tech_el, "")).strip()
+    base_detail = str(_get_select_value(base_detail_el, "")).strip()
+    base_case = str(_get_select_value(base_case_el, "")).strip()
+    try:
+        base_size = int(float(_get_select_value(base_size_el, 100)))
+    except Exception:
+        base_size = 100
+
+    new_tech = str(_get_select_value(new_tech_el, "")).strip()
+    new_detail = str(_get_select_value(new_detail_el, "")).strip()
+    new_case = str(_get_select_value(new_case_el, "")).strip()
+
+    # Optional attribute modifiers (YAML mapping)
+    attr_modifiers = {}
+    if attr_mods_el is not None:
+        raw_mods = str(_get_select_value(attr_mods_el, "") or "").strip()
+        if raw_mods:
+            try:
+                parsed = yaml.safe_load(raw_mods)
+            except Exception as exc:
+                set_status(f"Attribute modifiers YAML error: {exc}", "error")
+                return
+
+            if not isinstance(parsed, dict):
+                set_status(
+                    "Attribute modifiers must be a YAML mapping (key: value).",
+                    "error",
+                )
+                return
+
+            reserved_keys = {
+                "technology",
+                "tech_detail",
+                "cost_case",
+                "size_mw",
+                "new_technology",
+                "new_tech_detail",
+                "new_cost_case",
+            }
+            overlap = reserved_keys & set(parsed.keys())
+            if overlap:
+                set_status(
+                    "Attribute modifiers cannot change core resource identity fields. "
+                    "These fields are managed automatically by the resource definition; "
+                    "please use different keys for custom attributes.",
+                    "error",
+                )
+                return
+
+            attr_modifiers = parsed
+
+    if not (
+        base_tech and base_detail and base_case and new_tech and new_detail and new_case
+    ):
+        set_status(
+            "Fill out both the base ATB resource and the new resource identity.",
+            "error",
+        )
+        return
+
+    fuel_type = str(_get_select_value(fuel_type_el, "standard"))
+    std_fuel = str(_get_select_value(std_fuel_el, "naturalgas"))
+
+    new_fuel_name = str(_get_select_value(new_fuel_name_el, "")).strip()
+    try:
+        new_fuel_price = float(_get_select_value(new_fuel_price_el, 0))
+    except Exception:
+        new_fuel_price = 0.0
+    try:
+        new_fuel_ef = float(_get_select_value(new_fuel_ef_el, 0))
+    except Exception:
+        new_fuel_ef = 0.0
+
+    tag_class = str(_get_select_value(tag_class_el, "THERM"))
+    is_commit = (
+        bool(is_commit_el.checked) if (is_commit_el and tag_class == "THERM") else False
+    )
+
+    if fuel_type == "new":
+        if not new_fuel_name:
+            set_status("New fuel requires a fuel name.", "error")
+            return
+        if new_fuel_price < 0:
+            set_status("Fuel price must be >= 0.", "error")
+            return
+        if new_fuel_ef < 0:
+            set_status("Emission factor must be >= 0.", "error")
+            return
+
+    fuel_desc = (
+        std_fuel
+        if fuel_type == "standard"
+        else f"{new_fuel_name} @ ${new_fuel_price}/MMBtu"
+    )
+
+    state.modified_new_resources[key] = {
+        # resources.yml schema
+        "technology": base_tech,
+        "tech_detail": base_detail,
+        "cost_case": base_case,
+        "size_mw": int(base_size),
+        "new_technology": new_tech,
+        "new_tech_detail": new_detail,
+        "new_cost_case": new_case,
+        "attr_modifiers": attr_modifiers,
+        # metadata for fuels.yml and resource_tags.yml
+        "fuel_type": fuel_type,
+        "standard_fuel": std_fuel,
+        "new_fuel_name": new_fuel_name,
+        "new_fuel_price": float(new_fuel_price),
+        "new_fuel_emission_factor": float(new_fuel_ef),
+        "tag_class": tag_class,
+        "is_commit": bool(is_commit),
+        "fuel_desc": fuel_desc,
+    }
+
+    # Clear modifiers editor for next entry
+    if attr_mods_el is not None:
+        try:
+            attr_mods_el.value = ""
+        except Exception:
+            pass
+
+    render_modified_resources_list()
+    set_status(f"Added modified resource: {key}", "success")
+
+
+def _get_region_aggregations_or_raise():
+    if state.region_aggregations:
+        return state.region_aggregations
+    raise Exception("Run region clustering first to generate model regions.")
+
+
+def compute_regional_hydro_factor(region_aggregations):
+    """Default hydro_factor=2 globally; set regional_hydro_factor=4 for any model region that contains BA p1-p7."""
+    target_bas = {f"p{i}" for i in range(1, 8)}
+    out = {}
+    for region_name, bas in region_aggregations.items():
+        bas_set = {str(b).strip().lower() for b in (bas or [])}
+        if bas_set & target_bas:
+            out[region_name] = 4
+    return out
+
+
+def generate_resources_settings():
+    region_aggs = _get_region_aggregations_or_raise()
+
+    # Existing generator clustering: prefer plant clustering output if available
+    cluster_settings = state.plant_cluster_settings or {}
+    existing_num_clusters = cluster_settings.get("num_clusters")
+    if not isinstance(existing_num_clusters, dict) or not existing_num_clusters:
+        # Minimal fallback (users should run plant clustering)
+        existing_num_clusters = {
+            "Conventional Steam Coal": 1,
+            "Natural Gas Fired Combined Cycle": 1,
+            "Natural Gas Fired Combustion Turbine": 1,
+            "Nuclear": 1,
+            "Conventional Hydroelectric": 1,
+            "Solar Photovoltaic": 1,
+            "Onshore Wind Turbine": 1,
+            "Batteries": 1,
+        }
+
+    group_tech = bool(cluster_settings.get("group_technologies", True))
+    tech_groups = cluster_settings.get("tech_groups")
+    if not isinstance(tech_groups, dict):
+        tech_groups = {
+            "Biomass": [
+                "Wood/Wood Waste Biomass",
+                "Landfill Gas",
+                "Municipal Solid Waste",
+                "Other Waste Biomass",
+            ],
+            "Other_peaker": [
+                "Natural Gas Internal Combustion Engine",
+                "Petroleum Liquids",
+            ],
+        }
+
+    alt_num_clusters = cluster_settings.get("alt_num_clusters")
+    if not isinstance(alt_num_clusters, dict) or not alt_num_clusters:
+        alt_num_clusters = None
+
+    # New-build resources come from textarea
+    raw_el = document.getElementById("newResourcesRaw")
+    new_resources = parse_new_resources_text(raw_el.value if raw_el else "")
+    if not new_resources:
+        # Seed a minimal starter set
+        new_resources = [
+            ["NaturalGas", "1-on-1 Combined Cycle (H-Frame)", "Moderate", 500],
+            ["LandbasedWind", "Class3", "Moderate", 1],
+            ["UtilityPV", "Class1", "Moderate", 1],
+            ["Utility-Scale Battery Storage", "Lithium Ion", "Moderate", 1],
+            ["Nuclear", "Nuclear - Large", "Moderate", 1000],
+        ]
+
+    # Hydro defaults
+    hydro_factor = 2
+    regional_hydro = compute_regional_hydro_factor(region_aggs)
+
+    # Resources inputs
+    resource_data_year = int(
+        _get_select_value(document.getElementById("targetUsdYear"), 2024)
+    )
+    # Keep resource_data_year separate from target_usd_year for future; default to targetUsdYear for MVP
+    resource_financial_case = "Market"
+    resource_cap_recovery_years = 20
+    interconnect_capex_mw = 100000
+
+    out = {
+        "cluster_with_retired_gens": True,
+        "num_clusters": existing_num_clusters,
+        "group_technologies": bool(group_tech),
+        "tech_groups": tech_groups,
+        "regional_no_grouping": None,
+        "alt_num_clusters": alt_num_clusters if alt_num_clusters is not None else None,
+        "hydro_factor": hydro_factor,
+        "regional_hydro_factor": regional_hydro if regional_hydro else None,
+        "energy_storage_duration": {
+            "Hydroelectric Pumped Storage": 15.5,
+            "Batteries": 2,
+        },
+        "resource_data_year": resource_data_year,
+        "resource_financial_case": resource_financial_case,
+        "resource_cap_recovery_years": resource_cap_recovery_years,
+        "alt_resource_cap_recovery_years": {
+            "Battery": 15,
+            "Nuclear": 40,
+        },
+        "new_resources": new_resources,
+        "interconnect_capex_mw": interconnect_capex_mw,
+        "cache_resource_clusters": True,
+        "use_resource_clusters_cache": True,
+        "renewables_clusters": DEFAULT_RENEWABLES_CLUSTERS,
+        "modified_new_resources": (
+            {
+                k: (
+                    {
+                        "technology": v["technology"],
+                        "tech_detail": v["tech_detail"],
+                        "cost_case": v["cost_case"],
+                        "size_mw": v["size_mw"],
+                        "new_technology": v["new_technology"],
+                        "new_tech_detail": v["new_tech_detail"],
+                        "new_cost_case": v["new_cost_case"],
+                        **(
+                            v.get("attr_modifiers")
+                            if isinstance(v.get("attr_modifiers"), dict)
+                            else {}
+                        ),
+                    }
+                )
+                for k, v in sorted(state.modified_new_resources.items())
+            }
+            if state.modified_new_resources
+            else None
+        ),
+    }
+
+    # Remove nulls to keep YAML clean
+    out = {k: v for k, v in out.items() if v is not None}
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def generate_fuels_settings():
+    fuel_year = int(_get_select_value(document.getElementById("fuelDataYear"), 2025))
+
+    # Fuel scenarios: default coal to no_111d if present for selected year; otherwise reference.
+    coal_sel = _get_select_value(document.getElementById("fuelScenarioCoal"), None)
+    gas_sel = _get_select_value(document.getElementById("fuelScenarioNaturalGas"), None)
+    dist_sel = _get_select_value(
+        document.getElementById("fuelScenarioDistillate"), None
+    )
+    ura_sel = _get_select_value(document.getElementById("fuelScenarioUranium"), None)
+
+    # Ensure selects are populated (e.g., if user generates settings before load finishes)
+    if not coal_sel or not gas_sel or not dist_sel or not ura_sel:
+        populate_fuel_scenario_selects()
+        coal_sel = _get_select_value(
+            document.getElementById("fuelScenarioCoal"), "reference"
+        )
+        gas_sel = _get_select_value(
+            document.getElementById("fuelScenarioNaturalGas"), "reference"
+        )
+        dist_sel = _get_select_value(
+            document.getElementById("fuelScenarioDistillate"), "reference"
+        )
+        ura_sel = _get_select_value(
+            document.getElementById("fuelScenarioUranium"), "reference"
+        )
+
+    fuel_scenarios = {
+        "coal": str(coal_sel or "reference"),
+        "naturalgas": str(gas_sel or "reference"),
+        "distillate": str(dist_sel or "reference"),
+        "uranium": str(ura_sel or "reference"),
+    }
+
+    tech_fuel_map = {
+        "Conventional Steam Coal": "coal",
+        "Natural Gas Fired Combined Cycle": "naturalgas",
+        "Natural Gas Fired Combustion Turbine": "naturalgas",
+        "Natural Gas Steam Turbine": "naturalgas",
+        "Natural Gas Internal Combustion Engine": "naturalgas",
+        "Other_peaker": "naturalgas",
+        "NaturalGas": "naturalgas",
+        "Petroleum Liquids": "distillate",
+        "Nuclear": "uranium",
+    }
+
+    fuel_emission_factors = {
+        "naturalgas": 0.05306,
+        "coal": 0.09552,
+        "distillate": 0.07315,
+    }
+
+    user_fuel_price = {}
+
+    # Modified resources can introduce new fuels and/or new mappings
+    for _, item in state.modified_new_resources.items():
+        prefix = _prefix_from_new_technology(item.get("new_technology"))
+        if not prefix:
+            continue
+        if item.get("fuel_type") == "new":
+            fuel_name = str(item.get("new_fuel_name") or "").strip()
+            if not fuel_name:
+                continue
+            fuel_scenarios.setdefault(fuel_name, "reference")
+            tech_fuel_map[prefix] = fuel_name
+            user_fuel_price[fuel_name] = float(item.get("new_fuel_price", 0.0))
+            fuel_emission_factors[fuel_name] = float(
+                item.get("new_fuel_emission_factor", 0.0)
+            )
+        else:
+            std_fuel = str(item.get("standard_fuel") or "naturalgas")
+            tech_fuel_map[prefix] = std_fuel
+
+    out = {
+        "fuel_data_year": fuel_year,
+        "fuel_scenarios": fuel_scenarios,
+        "tech_fuel_map": tech_fuel_map,
+        "fuel_emission_factors": fuel_emission_factors,
+    }
+    if user_fuel_price:
+        out["user_fuel_price"] = user_fuel_price
+
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def generate_transmission_settings():
+    out = {
+        "tx_expansion_per_period": 1.0,
+        "tx_expansion_mw_per_period": 400,
+    }
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def generate_distributed_gen_settings():
+    out = {
+        "dg_as_resource": True,
+        "avg_distribution_loss": 0.0453,
+    }
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def generate_startup_costs_settings():
+    out = {
+        "startup_fuel_use": {
+            "Conventional Steam Coal": 16.5,
+            "Natural Gas Fired Combined Cycle": 2.0,
+            "Natural Gas Fired Combustion Turbine": 3.5,
+            "Natural Gas Steam Turbine": 13.7,
+            "NaturalGas_1-on-1": 2.0,
+            "NaturalGas_Combustion": 3.5,
+        },
+        "startup_vom_costs_mw": {
+            "coal_small_sub": 2.81,
+            "coal_large_sub": 2.69,
+            "coal_supercritical": 2.98,
+            "gas_cc": 1.03,
+            "gas_large_ct": 0.77,
+            "gas_aero_ct": 0.70,
+            "gas_steam": 1.03,
+            "nuclear": 5.4,
+        },
+        "startup_vom_costs_usd_year": 2011,
+        "startup_costs_type": "startup_costs_per_cold_start_mw",
+        "startup_costs_per_cold_start_mw": {
+            "coal_small_sub": 147,
+            "coal_large_sub": 105,
+            "coal_supercritical": 104,
+            "gas_cc": 79,
+            "gas_large_ct": 103,
+            "gas_aero_ct": 32,
+            "gas_steam": 75,
+            "nuclear": 210,
+        },
+        "startup_costs_per_cold_start_usd_year": 2011,
+        "existing_startup_costs_tech_map": {
+            "Conventional Steam Coal": "coal_large_sub",
+            "Natural Gas Fired Combined Cycle": "gas_cc",
+            "Natural Gas Fired Combustion Turbine": "gas_large_ct",
+            "Natural Gas Steam Turbine": "gas_steam",
+            "Nuclear": "nuclear",
+            "Other_peaker": "gas_steam",
+        },
+        "new_build_startup_costs": {
+            "Coal_CCS30": "coal_supercritical",
+            "Coal_CCS90": "coal_supercritical",
+            "Coal_IGCC": "coal_supercritical",
+            "Coal_new": "coal_supercritical",
+            "NaturalGas_CT": "gas_large_ct",
+            "NaturalGas_CC": "gas_cc",
+            "NaturalGas_CCS100": "gas_cc",
+            "Nuclear_Nuclear": "nuclear",
+            "NaturalGas_1-on-1": "gas_cc",
+            "NaturalGas_Combustion": "gas_large_ct",
+        },
+    }
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def generate_resource_tags_settings():
+    # Baseline: reuse the test settings schema, but no regional_tag_values.
+    tag_names = [
+        "THERM",
+        "VRE",
+        "Num_VRE_Bins",
+        "MUST_RUN",
+        "STOR",
+        "FLEX",
+        "HYDRO",
+        "LDS",
+        "Commit",
+        "ESR_1",
+        "ESR_2",
+        "New_Build",
+        "CapRes_1",
+        "CapRes_2",
+        "MinCapTag_1",
+        "MinCapTag_2",
+        "MinCapTag_3",
+        "Reg_Max",
+        "Rsv_Max",
+    ]
+
+    values = {
+        "THERM": {
+            "Conventional Steam Coal": 1,
+            "Natural Gas Fired Combined Cycle": 1,
+            "Natural Gas Fired Combustion Turbine": 1,
+            "Natural Gas Internal Combustion Engine": 1,
+            "Natural Gas Steam Turbine": 1,
+            "Other_peaker": 1,
+            "Petroleum Liquids": 1,
+            "Nuclear": 1,
+            "NaturalGas_": 1,
+        },
+        "VRE": {
+            "LandbasedWind": 1,
+            "Onshore Wind": 1,
+            "OffshoreWind": 1,
+            "Offshore Wind Turbine": 1,
+            "Solar Photovoltaic": 1,
+            "UtilityPV": 1,
+        },
+        "Num_VRE_Bins": {
+            "LandbasedWind": 1,
+            "Onshore Wind": 1,
+            "OffshoreWind": 1,
+            "Offshore Wind Turbine": 1,
+            "Solar Photovoltaic": 1,
+            "UtilityPV": 1,
+        },
+        "STOR": {
+            "Batteries": 1,
+            "Battery": 1,
+            "Hydroelectric Pumped Storage": 1,
+        },
+        "HYDRO": {
+            "Conventional Hydroelectric": 1,
+            "Hydropower": 1,
+        },
+        "MUST_RUN": {
+            "Small Hydroelectric": 1,
+            "Geothermal": 1,
+            "Wood/Wood Waste Biomass": 1,
+            "Biomass": 1,
+            "distributed_gen": 1,
+        },
+        "Commit": {
+            "Conventional Steam Coal": 1,
+            "Natural Gas Fired Combined Cycle": 1,
+            "Natural Gas Fired Combustion Turbine": 1,
+            "Natural Gas Internal Combustion Engine": 1,
+            "Natural Gas Steam Turbine": 1,
+            "Other_peaker": 1,
+            "Petroleum Liquids": 1,
+            "Nuclear": 1,
+        },
+        "New_Build": {
+            "NaturalGas": 1,
+            "LandbasedWind": 1,
+            "UtilityPV": 1,
+            "Battery": 1,
+            "Nuclear_Nuclear": 1,
+        },
+        "CapRes_1": {
+            "Conventional Steam Coal": 0.9,
+            "Natural Gas Fired Combined Cycle": 0.9,
+            "Natural Gas Fired Combustion Turbine": 0.9,
+            "Natural Gas Internal Combustion Engine": 0.9,
+            "Natural Gas Steam Turbine": 0.9,
+            "Other_peaker": 0.9,
+            "Petroleum Liquids": 0.9,
+            "Nuclear": 0.9,
+            "LandbasedWind": 0.8,
+            "UtilityPV": 0.8,
+            "Battery": 0.95,
+            "Hydroelectric Pumped Storage": 0.95,
+        },
+        "CapRes_2": {
+            "Conventional Steam Coal": 0.9,
+            "Natural Gas Fired Combined Cycle": 0.9,
+            "Natural Gas Fired Combustion Turbine": 0.9,
+            "Natural Gas Internal Combustion Engine": 0.9,
+            "Natural Gas Steam Turbine": 0.9,
+            "Other_peaker": 0.9,
+            "Petroleum Liquids": 0.9,
+            "Nuclear": 0.9,
+            "LandbasedWind": 0.8,
+            "UtilityPV": 0.8,
+            "Battery": 0.95,
+            "Hydroelectric Pumped Storage": 0.95,
+        },
+        "ESR_1": {},
+        "ESR_2": {},
+        "MinCapTag_1": {},
+        "MinCapTag_2": {},
+        "MinCapTag_3": {},
+        "FLEX": {},
+        "LDS": {},
+        "Reg_Max": {},
+        "Rsv_Max": {},
+    }
+
+    # Apply modified resource tag choices
+    for _, item in state.modified_new_resources.items():
+        prefix = _prefix_from_new_technology(item.get("new_technology"))
+        if not prefix:
+            continue
+        tag_class = str(item.get("tag_class") or "").strip()
+        if tag_class:
+            values.setdefault(tag_class, {})[prefix] = 1
+        if tag_class == "THERM" and bool(item.get("is_commit")):
+            values.setdefault("Commit", {})[prefix] = 1
+        values.setdefault("New_Build", {})[prefix] = 1
+
+    out = {
+        "model_tag_names": tag_names,
+        "default_model_tag": 0,
+        "model_tag_values": {k: v for k, v in values.items() if k in tag_names},
+    }
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def generate_model_definition_settings():
+    region_aggs = _get_region_aggregations_or_raise()
+    model_regions = sorted(region_aggs.keys())
+
+    target_usd_year = int(
+        _get_select_value(document.getElementById("targetUsdYear"), 2024)
+    )
+    utc_offset = int(_get_select_value(document.getElementById("utcOffset"), -5))
+    model_years = parse_int_list(
+        _get_select_value(document.getElementById("modelYears"), "")
+    )
+    planning_years = parse_int_list(
+        _get_select_value(document.getElementById("planningYears"), "")
+    )
+
+    if not model_years or not planning_years or len(model_years) != len(planning_years):
+        raise Exception("Model years and first planning years must be the same length.")
+
+    out = {
+        "model_regions": model_regions,
+        "region_aggregations": region_aggs,
+        "target_usd_year": target_usd_year,
+        "model_year": model_years,
+        "model_first_planning_year": planning_years,
+        "utc_offset": utc_offset,
+        "generator_columns": DEFAULT_GENERATOR_COLUMNS,
+    }
+    return yaml.dump(out, default_flow_style=False, sort_keys=False)
+
+
+def build_settings_yamls():
+    return {
+        "model_definition.yml": generate_model_definition_settings(),
+        "resources.yml": generate_resources_settings(),
+        "fuels.yml": generate_fuels_settings(),
+        "transmission.yml": generate_transmission_settings(),
+        "distributed_gen.yml": generate_distributed_gen_settings(),
+        "resource_tags.yml": generate_resource_tags_settings(),
+        "startup_costs.yml": generate_startup_costs_settings(),
+    }
+
+
+def populate_settings_file_select():
+    sel = document.getElementById("settingsFileSelect")
+    if not sel:
+        return
+    files = (
+        sorted(state.settings_yamls.keys())
+        if state.settings_yamls
+        else SETTINGS_FILENAMES
+    )
+    _set_select_options(sel, files, selected_value=files[0] if files else None)
+
+
+def update_settings_preview():
+    sel = document.getElementById("settingsFileSelect")
+    out_el = document.getElementById("settingsYamlOut")
+    if not out_el:
+        return
+    filename = _get_select_value(sel, None)
+    if filename and filename in state.settings_yamls:
+        out_el.value = state.settings_yamls[filename]
+    else:
+        out_el.value = ""
+
+
+def on_generate_settings(event):
+    try:
+        state.settings_yamls = build_settings_yamls()
+        populate_settings_file_select()
+        update_settings_preview()
+        set_status("Settings YAMLs generated.", "success")
+    except Exception as exc:
+        state.settings_yamls = {}
+        set_status(f"Settings generation error: {exc}", "error")
+
+
+def _download_text_file(filename, content):
+    blob = window.Blob.new([content], to_js({"type": "text/yaml"}))
+    url = window.URL.createObjectURL(blob)
+    a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    a.click()
+    window.URL.revokeObjectURL(url)
+
+
+def on_download_settings_file(event):
+    sel = document.getElementById("settingsFileSelect")
+    filename = _get_select_value(sel, None)
+    if not filename or filename not in state.settings_yamls:
+        set_status("Generate settings first.", "error")
+        return
+    _download_text_file(filename, state.settings_yamls[filename])
+    set_status(f"Downloaded {filename}", "success")
+
+
+def on_settings_file_change(event):
+    update_settings_preview()
 
 
 def on_copy_plant_yaml(event):
@@ -2910,6 +4228,12 @@ async def main():
     try:
         # Load data
         await load_data()
+
+        # Load ATB index for Settings tab (optional)
+        await load_atb_options()
+
+        # Load fuel scenarios for Settings tab (optional)
+        await load_fuel_prices()
 
         # Initialize map
         await init_map()
@@ -2980,6 +4304,48 @@ async def main():
             "click", create_proxy(on_reset_omit_defaults)
         )
 
+        # Settings tab
+        document.getElementById("addNewResourceBtn").addEventListener(
+            "click", create_proxy(on_add_new_resource)
+        )
+        document.getElementById("newResourcesRaw").addEventListener(
+            "input", create_proxy(lambda e: render_new_resources_list())
+        )
+        document.getElementById("addModifiedResourceBtn").addEventListener(
+            "click", create_proxy(on_add_modified_resource)
+        )
+        document.getElementById("clearModifiedResourcesBtn").addEventListener(
+            "click", create_proxy(on_clear_modified_resources)
+        )
+        document.getElementById("generateSettingsBtn").addEventListener(
+            "click", create_proxy(on_generate_settings)
+        )
+        document.getElementById("settingsFileSelect").addEventListener(
+            "change", create_proxy(on_settings_file_change)
+        )
+        document.getElementById("downloadSettingsFileBtn").addEventListener(
+            "click", create_proxy(on_download_settings_file)
+        )
+
+        # Fuel scenario options
+        document.getElementById("fuelDataYear").addEventListener(
+            "change", create_proxy(populate_fuel_scenario_selects)
+        )
+
+        # ATB picker change events
+        document.getElementById("atbYearSelect").addEventListener(
+            "change", create_proxy(on_atb_picker_change)
+        )
+        document.getElementById("atbTechSelect").addEventListener(
+            "change", create_proxy(on_atb_picker_change)
+        )
+        document.getElementById("atbTechDetailSelect").addEventListener(
+            "change", create_proxy(on_atb_picker_change)
+        )
+        document.getElementById("atbCostCaseSelect").addEventListener(
+            "change", create_proxy(on_atb_picker_change)
+        )
+
         # Box selection mode buttons
         document.getElementById("clickModeBtn").addEventListener(
             "click", create_proxy(on_click_mode)
@@ -3006,6 +4372,15 @@ async def main():
 
         # Seed the plant budget with a 15% buffer above the minimum clusters
         update_default_cluster_budget()
+
+        # Initialize Settings tab widgets
+        populate_atb_picker()
+        populate_fuel_data_year_select()
+        populate_fuel_scenario_selects()
+        render_new_resources_list()
+        render_modified_resources_list()
+        populate_settings_file_select()
+        update_settings_preview()
 
         # Done loading
         hide_loading()

@@ -1,0 +1,52 @@
+name: Update Web App Data
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow
+      
+      - name: Update ATB options
+        run: |
+          python web/build_atb_options.py --out web/data/atb_options.json
+        continue-on-error: true
+      
+      - name: Update fuel prices
+        run: |
+          python web/build_fuel_prices.py --out web/data/fuel_prices.csv
+        continue-on-error: true
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code web/data/ || echo "changed=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push if changed
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add web/data/atb_options.json web/data/fuel_prices.csv
+          git commit -m "chore: update web app data files [skip ci]"
+          git push
