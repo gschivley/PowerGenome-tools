@@ -597,6 +597,64 @@
         .collapsible-content.hidden {
             display: none;
         }
+
+        /* Button group layout - responsive */
+        .button-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .button-group-with-input {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .button-group-with-input input {
+            flex: 1;
+            padding: 6px;
+            min-width: 120px;
+        }
+
+        /* Responsive layout for smaller screens */
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group .btn {
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+
+            .button-group-with-input {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group-with-input input {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .button-group-with-input .btn {
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Extra small screens - ensure even better stacking */
+        @media (max-width: 480px) {
+            .btn {
+                width: 100%;
+                margin-right: 0;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 
@@ -874,10 +932,8 @@
                             Manage groups below. Defaults start with Biomass and Other peaker.
                         </div>
                         <div class="group-editor">
-                            <div
-                                style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">
-                                <input id="newGroupName" type="text" placeholder="New group name"
-                                    style="flex: 1; padding: 6px; min-width: 120px;">
+                            <div class="button-group-with-input">
+                                <input id="newGroupName" type="text" placeholder="New group name">
                                 <button class="btn btn-secondary" id="addGroupBtn" type="button">Add Group</button>
                                 <button class="btn btn-secondary" id="resetGroupsBtn" type="button">Reset
                                     Defaults</button>
@@ -933,7 +989,7 @@
                                 <select id="omitSelectedList" multiple size="8"></select>
                             </div>
                         </div>
-                        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <div class="button-group" style="margin-top: 8px;">
                             <button class="btn btn-secondary small-btn" id="omitResetBtn" type="button">Reset
                                 defaults</button>
                             <div style="font-size: 11px; color: #666;">All Other, Flywheel, and Solar thermal
