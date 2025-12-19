@@ -807,6 +807,7 @@
                     <div style="font-size: 11px; color: #666; margin-top: 4px;">
                         Provide the same number of values for model years and first planning years.
                     </div>
+                    <div id="yearsValidationError" style="font-size: 12px; color: #d32f2f; margin-top: 4px; display: none;"></div>
                 </div>
 
                 <div class="step-footer">
@@ -1325,6 +1326,39 @@ wacc_real: 0.05"></textarea>
             row.style.display = (cls.value === 'THERM') ? 'block' : 'none';
         }
 
+        function validateModelYears() {
+            const modelYearsInput = document.getElementById('modelYears');
+            const planningYearsInput = document.getElementById('planningYears');
+            const errorDiv = document.getElementById('yearsValidationError');
+            
+            if (!modelYearsInput || !planningYearsInput || !errorDiv) return;
+            
+            const modelYearsText = modelYearsInput.value.trim();
+            const planningYearsText = planningYearsInput.value.trim();
+            
+            // Parse comma/space-separated integers
+            function parseIntList(text) {
+                if (!text) return [];
+                const tokens = text.split(/[\s,]+/).filter(t => t.length > 0);
+                return tokens.map(t => parseInt(t, 10)).filter(n => !isNaN(n));
+            }
+            
+            const modelYears = parseIntList(modelYearsText);
+            const planningYears = parseIntList(planningYearsText);
+            
+            if (modelYears.length === 0 || planningYears.length === 0) {
+                errorDiv.style.display = 'none';
+                return;
+            }
+            
+            if (modelYears.length !== planningYears.length) {
+                errorDiv.textContent = `Error: Model years (${modelYears.length}) and planning years (${planningYears.length}) must have the same number of values.`;
+                errorDiv.style.display = 'block';
+            } else {
+                errorDiv.style.display = 'none';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('autoOptimize').addEventListener('change', toggleAutoOptimize);
 
@@ -1334,6 +1368,12 @@ wacc_real: 0.05"></textarea>
             if (cls) cls.addEventListener('change', toggleCommitRow);
             toggleModFuelType();
             toggleCommitRow();
+            
+            // Add validation for model years and planning years
+            const modelYearsInput = document.getElementById('modelYears');
+            const planningYearsInput = document.getElementById('planningYears');
+            if (modelYearsInput) modelYearsInput.addEventListener('input', validateModelYears);
+            if (planningYearsInput) planningYearsInput.addEventListener('input', validateModelYears);
         });
 
         // Sidebar Resizer for Step 1
