@@ -1258,16 +1258,16 @@ def clone_group_map(group_map):
 
 
 DEFAULT_TECH_GROUPS = {
-    "Biomass": [
+    "Biomass": {
         "Wood/Wood Waste Biomass",
         "Landfill Gas",
         "Municipal Solid Waste",
         "Other Waste Biomass",
-    ],
-    "Other_peaker": [
+    },
+    "Other_peaker": {
         "Natural Gas Internal Combustion Engine",
         "Petroleum Liquids",
-    ],
+    },
 }
 
 
