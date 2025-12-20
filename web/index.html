@@ -1267,7 +1267,8 @@ wacc_real: 0.05"></textarea>
                                 trading zones based on state trading rules in <code>rectable.csv</code>. Each zone gets
                                 its own ESR constraints.</li>
                             <li><strong>Technology qualification:</strong> Technologies are matched against
-                                <code>allowed_techs.csv</code> to determine which can satisfy each ESR type.</li>
+                                <code>allowed_techs.csv</code> to determine which can satisfy each ESR type.
+                            </li>
                             <li><strong>Optional step:</strong> If you do not need ESR policies, uncheck "Include ESR
                                 policies" and skip to Export.</li>
                         </ol>
@@ -1331,6 +1332,8 @@ wacc_real: 0.05"></textarea>
                         <textarea id="esrCsvPreview" readonly
                             style="width: 100%; height: 150px; font-family: monospace; font-size: 11px; border: 1px solid #ddd; border-radius: 4px; padding: 8px;"
                             placeholder="Run analysis to preview emission_policies.csv..."></textarea>
+                        <button class="btn btn-secondary" id="downloadEmissionPoliciesBtn"
+                            style="margin-top: 8px;">Download emission_policies.csv</button>
                     </div>
                 </div>
 

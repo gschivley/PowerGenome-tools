@@ -96,6 +96,7 @@ class AppState:
 
         self.esr_zones = None  # Computed ESR zones
         self.esr_map = None  # ESR constraint name -> regions mapping
+        self.esr_type_map = None  # ESR constraint name -> "RPS" or "CES"
         self.emission_policies_df = None  # Generated emission_policies.csv
 
 
@@ -346,18 +347,40 @@ def get_qualified_technologies(plants_df, new_resources, allowed_techs_df):
 def aggregate_policy_for_region(
     region_bas, year, policy_type, hierarchy_df, pop_fraction_df, policy_df
 ):
-    """Compute population-weighted policy requirement for a model region in a given year."""
+    """Compute population-weighted average policy requirement for a model region in a given year.
+
+    The result is a weighted average of each state's policy requirement, where the weights
+    are the fraction of the region's total population that resides in each state.
+    """
     ba_to_state_val = extract_state_for_region(region_bas, hierarchy_df)
-    total_requirement = 0.0
+
+    # First, compute total population in this region and population per state
+    region_total_pop = 0.0
+    state_pop_in_region = {}  # state -> total population from that state in this region
+
     for ba in region_bas:
         state_val = ba_to_state_val[ba]
-        ba_pop = pop_fraction_df[
+        ba_pop_row = pop_fraction_df[
             (pop_fraction_df["region"] == ba) & (pop_fraction_df["st"] == state_val)
         ]
-        if ba_pop.empty:
-            frac = 1.0 / len(region_bas)
+        if ba_pop_row.empty:
+            # Fallback: assume equal population across BAs
+            ba_pop = 1.0
         else:
-            frac = float(ba_pop.iloc[0]["frac_of_state_pop"])
+            ba_pop = float(ba_pop_row.iloc[0]["total_population"])
+
+        region_total_pop += ba_pop
+        state_pop_in_region[state_val] = (
+            state_pop_in_region.get(state_val, 0.0) + ba_pop
+        )
+
+    if region_total_pop == 0:
+        return 0.0
+
+    # Now compute weighted average of policy requirements by state
+    total_requirement = 0.0
+    for state_val, state_pop in state_pop_in_region.items():
+        weight = state_pop / region_total_pop
 
         policy_row = policy_df[
             (policy_df["year"] == year) & (policy_df["st"] == state_val)
@@ -371,7 +394,9 @@ def aggregate_policy_for_region(
                 if col_name in policy_row.columns
                 else 0.0
             )
-        total_requirement += frac * policy_value
+
+        total_requirement += weight * policy_value
+
     return total_requirement
 
 
@@ -387,13 +412,21 @@ def generate_emission_policies_csv(
     include_ces=True,
     case_id="all",
 ):
-    """Generate emission_policies.csv data."""
+    """Generate emission_policies.csv data.
+
+    Returns:
+        (df, esr_map, esr_type_map):
+            - df: DataFrame with emission policies
+            - esr_map: {ESR_1: [regions], ESR_2: [regions], ...}
+            - esr_type_map: {ESR_1: "RPS", ESR_2: "CES", ...}
+    """
     max_year_in_data_rps = rps_df["year"].max()
     max_year_in_data_ces = ces_df["year"].max()
 
     rows = []
     esr_constraint_num = 1
     esr_map = {}
+    esr_type_map = {}  # Track whether each ESR is RPS or CES
     zone_esr_map = {}
 
     for zone_idx, zone_regions in enumerate(zones):
@@ -402,10 +435,12 @@ def generate_emission_policies_csv(
         if include_rps:
             zone_rps = f"ESR_{esr_constraint_num}"
             esr_map[zone_rps] = zone_regions
+            esr_type_map[zone_rps] = "RPS"
             esr_constraint_num += 1
         if include_ces:
             zone_ces = f"ESR_{esr_constraint_num}"
             esr_map[zone_ces] = zone_regions
+            esr_type_map[zone_ces] = "CES"
             esr_constraint_num += 1
         zone_esr_map[zone_idx] = (zone_rps, zone_ces)
 
@@ -463,7 +498,7 @@ def generate_emission_policies_csv(
     columns = ["case_id", "year", "region"] + esr_cols_sorted
     df = df[columns]
 
-    return df, esr_map
+    return df, esr_map, esr_type_map
 
 
 SETTINGS_FILENAMES = [
@@ -2288,11 +2323,11 @@ def inertia_single_cluster(features, weights=None):
 
 def build_ba_to_model_region_map():
     """Return BA -> model region lookup using current clustering (or selected BAs).
-    
+
     If clustering has been run, uses the region_aggregations.
     If not, but BAs are selected, maps selected BAs to themselves and excludes others.
     If nothing is selected, maps all BAs to themselves (fallback).
-    
+
     Note: Only BAs that are part of the clustering (i.e., in region_aggregations)
     are included. Plants in other BAs are excluded from clustering.
     """
@@ -4469,8 +4504,8 @@ def generate_startup_costs_settings():
 
 
 def generate_resource_tags_settings():
-    # Baseline: reuse the test settings schema, but no regional_tag_values.
-    tag_names = [
+    # Base tag names (ESR tags will be added dynamically)
+    base_tag_names = [
         "THERM",
         "VRE",
         "Num_VRE_Bins",
@@ -4480,8 +4515,15 @@ def generate_resource_tags_settings():
         "HYDRO",
         "LDS",
         "Commit",
-        "ESR_1",
-        "ESR_2",
+    ]
+
+    # Collect ESR tag names from state (if ESR analysis has been run)
+    esr_tag_names = []
+    if state.esr_map:
+        esr_tag_names = sorted(state.esr_map.keys(), key=lambda x: int(x.split("_")[1]))
+
+    # Remaining tag names
+    suffix_tag_names = [
         "New_Build",
         "CapRes_1",
         "CapRes_2",
@@ -4491,6 +4533,8 @@ def generate_resource_tags_settings():
         "Reg_Max",
         "Rsv_Max",
     ]
+
+    tag_names = base_tag_names + esr_tag_names + suffix_tag_names
 
     values = {
         "THERM": {
@@ -4581,8 +4625,6 @@ def generate_resource_tags_settings():
             "Battery": 0.95,
             "Hydroelectric Pumped Storage": 0.95,
         },
-        "ESR_1": {},
-        "ESR_2": {},
         "MinCapTag_1": {},
         "MinCapTag_2": {},
         "MinCapTag_3": {},
@@ -4591,6 +4633,10 @@ def generate_resource_tags_settings():
         "Reg_Max": {},
         "Rsv_Max": {},
     }
+
+    # Add empty ESR entries to model_tag_values (actual values are in regional_tag_values)
+    for esr_name in esr_tag_names:
+        values[esr_name] = {}
 
     # Apply modified resource tag choices
     for _, item in state.modified_new_resources.items():
@@ -4609,6 +4655,39 @@ def generate_resource_tags_settings():
         "default_model_tag": 0,
         "model_tag_values": {k: v for k, v in values.items() if k in tag_names},
     }
+
+    # Generate regional_tag_values for ESR constraints
+    # Maps region -> ESR_name -> {tech: 1} for qualified technologies
+    if state.esr_map and state.esr_type_map:
+        regional_tag_values = {}
+
+        for esr_name, regions in state.esr_map.items():
+            esr_type = state.esr_type_map.get(esr_name)
+            if not esr_type:
+                continue
+
+            # Get qualified technologies based on ESR type
+            if esr_type == "RPS":
+                qualified_techs = getattr(state, "esr_rps_techs", set()) or set()
+            else:  # CES
+                qualified_techs = getattr(state, "esr_ces_techs", set()) or set()
+
+            # Build tech map for this ESR
+            tech_map = {tech: 1 for tech in sorted(qualified_techs)}
+
+            # Apply to each region in this ESR zone
+            for region in regions:
+                if region not in regional_tag_values:
+                    regional_tag_values[region] = {}
+                regional_tag_values[region][esr_name] = tech_map
+
+        if regional_tag_values:
+            # Sort regions for consistent output
+            out["regional_tag_values"] = {
+                region: regional_tag_values[region]
+                for region in sorted(regional_tag_values.keys())
+            }
+
     return yaml.dump(out, default_flow_style=False, sort_keys=False)
 
 
@@ -4747,6 +4826,25 @@ def on_download_plant_yaml(event):
     set_status("Plant YAML downloaded!", "success")
 
 
+def on_download_emission_policies(event):
+    """Download emission_policies.csv file."""
+    if state.emission_policies_df is None:
+        set_status("Run ESR analysis first to generate emission_policies.csv.", "error")
+        return
+
+    csv_content = state.emission_policies_df.to_csv(index=False)
+    blob = window.Blob.new([csv_content], to_js({"type": "text/csv"}))
+    url = window.URL.createObjectURL(blob)
+
+    a = document.createElement("a")
+    a.href = url
+    a.download = "emission_policies.csv"
+    a.click()
+
+    window.URL.revokeObjectURL(url)
+    set_status("emission_policies.csv downloaded!", "success")
+
+
 def on_grouping_change(event):
     """Handle grouping column change."""
     update_no_cluster_options()
@@ -4869,17 +4967,19 @@ def on_run_esr_analysis(event):
         )
 
         # Generate emission policies CSV using expanded region aggregations
-        state.emission_policies_df, state.esr_map = generate_emission_policies_csv(
-            esr_region_aggregations,
-            model_years,
-            state.esr_zones,
-            state.hierarchy_df,
-            state.pop_fraction_df,
-            state.rps_df,
-            state.ces_df,
-            include_rps=include_rps,
-            include_ces=include_ces,
-            case_id="all",
+        state.emission_policies_df, state.esr_map, state.esr_type_map = (
+            generate_emission_policies_csv(
+                esr_region_aggregations,
+                model_years,
+                state.esr_zones,
+                state.hierarchy_df,
+                state.pop_fraction_df,
+                state.rps_df,
+                state.ces_df,
+                include_rps=include_rps,
+                include_ces=include_ces,
+                case_id="all",
+            )
         )
 
         # Render results
@@ -5009,6 +5109,9 @@ async def main():
         # ESR step
         document.getElementById("runESRBtn").addEventListener(
             "click", create_proxy(on_run_esr_analysis)
+        )
+        document.getElementById("downloadEmissionPoliciesBtn").addEventListener(
+            "click", create_proxy(on_download_emission_policies)
         )
 
         # Fuel scenario options
