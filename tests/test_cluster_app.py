@@ -1073,6 +1073,7 @@ class TestIntegration:
 # ============================================================================
 
 
+# Duplicated from cluster_app.py lines 3931-3941
 def parse_int_list(text):
     """Parse comma/space-separated integers."""
     if text is None:
@@ -1086,6 +1087,7 @@ def parse_int_list(text):
     return out
 
 
+# Duplicated from cluster_app.py lines 3944-3969
 def parse_new_resources_text(text):
     """Parse manual new_resources lines.
 
@@ -1252,11 +1254,13 @@ Wind |  | Low | 100"""
 # ============================================================================
 
 
+# Duplicated from cluster_app.py lines 2225-2227
 def clone_group_map(group_map):
     """Shallow clone of group map with set copies."""
     return {name: set(values) for name, values in group_map.items()}
 
 
+# Duplicated from cluster_app.py lines 2203-2215
 DEFAULT_TECH_GROUPS = {
     "Biomass": {
         "Wood/Wood Waste Biomass",
@@ -1271,6 +1275,7 @@ DEFAULT_TECH_GROUPS = {
 }
 
 
+# Duplicated from cluster_app.py lines 2351-2359
 def apply_default_grouping(tech_group, enabled=True, group_map=None):
     """Collapse technologies into groups using provided map when enabled."""
     if not enabled:
@@ -1282,6 +1287,7 @@ def apply_default_grouping(tech_group, enabled=True, group_map=None):
     return tech_group
 
 
+# Duplicated from cluster_app.py lines 2737-2749
 def get_line_weight(capacity_mw):
     """Calculate line weight based on transmission capacity."""
     min_weight = 1
@@ -1294,6 +1300,7 @@ def get_line_weight(capacity_mw):
     return min_weight + normalized * (max_weight - min_weight)
 
 
+# Duplicated from cluster_app.py lines 4217-4225
 def compute_regional_hydro_factor(region_aggregations):
     """Default hydro_factor=2 globally; set regional_hydro_factor=4 for any model region that contains BA p1-p7."""
     target_bas = {f"p{i}" for i in range(1, 8)}
@@ -1487,6 +1494,7 @@ class TestComputeRegionalHydroFactor:
 # ============================================================================
 
 
+# Duplicated from cluster_app.py lines 1389-1440
 def spectral_cluster(graph, n_clusters):
     """Perform spectral clustering on the graph using Normalized Laplacian."""
     nodes = list(graph.nodes())
@@ -1603,6 +1611,7 @@ class TestSpectralClustering:
 # ============================================================================
 
 
+# Duplicated from cluster_app.py lines 1443-1469
 def louvain_cluster(graph):
     """Perform Louvain community detection on a graph."""
     if graph.number_of_nodes() == 0:
@@ -1689,12 +1698,14 @@ class TestLouvainClustering:
 # ============================================================================
 
 
+# Duplicated from cluster_app.py lines 111-114
 class ESRGenerationError(Exception):
     """Raised when ESR generation is not possible."""
 
     pass
 
 
+# Duplicated from cluster_app.py lines 117-126
 def extract_state_for_region(region_bas, hierarchy_df):
     """Extract states for each BA in a model region."""
     ba_to_state = {}
@@ -1707,12 +1718,14 @@ def extract_state_for_region(region_bas, hierarchy_df):
     return ba_to_state
 
 
+# Duplicated from cluster_app.py lines 129-132
 def get_states_in_region(region_bas, hierarchy_df):
     """Get unique states in a model region."""
     ba_to_state = extract_state_for_region(region_bas, hierarchy_df)
     return set(ba_to_state.values())
 
 
+# Duplicated from cluster_app.py lines 197-204
 def can_states_trade(state1, state2, rectable_df):
     """Check if two states can trade REC/ESR credits based on rectable.csv."""
     state1_upper = state1.upper()
@@ -1723,6 +1736,7 @@ def can_states_trade(state1, state2, rectable_df):
     return pd.notna(value) and float(value) > 0
 
 
+# Duplicated from cluster_app.py lines 207-236
 def can_states_trade_transitively(states_set, rectable_df):
     """Check if all states in a set can trade with each other transitively."""
     if len(states_set) <= 1:
@@ -1751,6 +1765,7 @@ def can_states_trade_transitively(states_set, rectable_df):
     return len(visited) == len(states_list)
 
 
+# Duplicated from cluster_app.py lines 135-194
 def split_bas_by_trading_zones(bas, hierarchy_df, rectable_df):
     """Split BAs into groups where all states in each group can trade transitively."""
     if rectable_df is None or len(bas) <= 1:
