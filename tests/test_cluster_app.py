@@ -1295,7 +1295,7 @@ def get_line_weight(capacity_mw):
 
 
 def compute_regional_hydro_factor(region_aggregations):
-    """Default hydro_factor=2 globally; set regional_hydro_factor=4 for regions with p1-p7."""
+    """Default hydro_factor=2 globally; set regional_hydro_factor=4 for any model region that contains BA p1-p7."""
     target_bas = {f"p{i}" for i in range(1, 8)}
     out = {}
     for region_name, bas in region_aggregations.items():
