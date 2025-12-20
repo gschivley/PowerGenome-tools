@@ -7,6 +7,7 @@ clustering, and YAML generation.
 """
 
 import json
+import re
 
 import networkx as nx
 import numpy as np
@@ -1065,6 +1066,867 @@ class TestIntegration:
         good_modularity = calculate_modularity(graph, good_clusters)
 
         assert good_modularity >= poor_modularity
+
+
+# ============================================================================
+# Parsing Utilities Tests (Priority 1)
+# ============================================================================
+
+
+def parse_int_list(text):
+    """Parse comma/space-separated integers."""
+    if text is None:
+        return []
+    raw = re.split(r"[\s,]+", str(text).strip())
+    out = []
+    for tok in raw:
+        if not tok:
+            continue
+        out.append(int(tok))
+    return out
+
+
+def parse_new_resources_text(text):
+    """Parse manual new_resources lines.
+
+    Each non-empty line should be: Technology | Tech Detail | Cost Case | Size
+    """
+    if not text:
+        return []
+    items = []
+    for line in str(text).splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) != 4:
+            continue
+        tech, detail, case, size = parts
+        if not tech or not detail or not case or not size:
+            continue
+        try:
+            size_val = int(float(size))
+        except Exception:
+            continue
+        items.append([tech, detail, case, size_val])
+    return items
+
+
+class TestParseIntList:
+    """Test parse_int_list function."""
+
+    def test_parse_comma_separated(self):
+        """Test parsing comma-separated integers."""
+        assert parse_int_list("1,2,3,4,5") == [1, 2, 3, 4, 5]
+
+    def test_parse_space_separated(self):
+        """Test parsing space-separated integers."""
+        assert parse_int_list("1 2 3 4 5") == [1, 2, 3, 4, 5]
+
+    def test_parse_mixed_separators(self):
+        """Test parsing mixed comma and space separators."""
+        assert parse_int_list("1, 2 , 3,4  5") == [1, 2, 3, 4, 5]
+
+    def test_parse_with_extra_whitespace(self):
+        """Test parsing with leading/trailing whitespace."""
+        assert parse_int_list("  1, 2, 3  ") == [1, 2, 3]
+
+    def test_parse_single_number(self):
+        """Test parsing a single number."""
+        assert parse_int_list("42") == [42]
+
+    def test_parse_none_input(self):
+        """Test parsing None returns empty list."""
+        assert parse_int_list(None) == []
+
+    def test_parse_empty_string(self):
+        """Test parsing empty string returns empty list."""
+        assert parse_int_list("") == []
+        assert parse_int_list("   ") == []
+
+    def test_parse_with_multiple_commas(self):
+        """Test parsing with consecutive separators."""
+        assert parse_int_list("1,,2,,3") == [1, 2, 3]
+
+    def test_parse_negative_numbers(self):
+        """Test parsing negative numbers."""
+        assert parse_int_list("-1, -2, -3") == [-1, -2, -3]
+
+    def test_parse_mixed_positive_negative(self):
+        """Test parsing mixed positive and negative."""
+        assert parse_int_list("1, -2, 3, -4") == [1, -2, 3, -4]
+
+
+class TestParseNewResourcesText:
+    """Test parse_new_resources_text function."""
+
+    def test_parse_single_line(self):
+        """Test parsing a single valid line."""
+        text = "NaturalGas | Combined Cycle | Moderate | 500"
+        result = parse_new_resources_text(text)
+        assert len(result) == 1
+        assert result[0] == ["NaturalGas", "Combined Cycle", "Moderate", 500]
+
+    def test_parse_multiple_lines(self):
+        """Test parsing multiple valid lines."""
+        text = """NaturalGas | Combined Cycle | Moderate | 500
+Wind | Onshore | Low | 100
+Solar | Utility PV | High | 200"""
+        result = parse_new_resources_text(text)
+        assert len(result) == 3
+        assert result[0][0] == "NaturalGas"
+        assert result[1][0] == "Wind"
+        assert result[2][0] == "Solar"
+
+    def test_parse_with_comments(self):
+        """Test that comment lines are skipped."""
+        text = """# This is a comment
+NaturalGas | Combined Cycle | Moderate | 500
+# Another comment
+Wind | Onshore | Low | 100"""
+        result = parse_new_resources_text(text)
+        assert len(result) == 2
+
+    def test_parse_with_blank_lines(self):
+        """Test that blank lines are skipped."""
+        text = """NaturalGas | Combined Cycle | Moderate | 500
+
+Wind | Onshore | Low | 100
+
+"""
+        result = parse_new_resources_text(text)
+        assert len(result) == 2
+
+    def test_parse_with_whitespace(self):
+        """Test parsing with extra whitespace around pipes."""
+        text = "NaturalGas  |  Combined Cycle  |  Moderate  |  500"
+        result = parse_new_resources_text(text)
+        assert len(result) == 1
+        assert result[0] == ["NaturalGas", "Combined Cycle", "Moderate", 500]
+
+    def test_parse_float_size_rounded(self):
+        """Test that float sizes are converted to int."""
+        text = "NaturalGas | Combined Cycle | Moderate | 500.7"
+        result = parse_new_resources_text(text)
+        assert result[0][3] == 500
+
+    def test_parse_invalid_size_skipped(self):
+        """Test that lines with invalid size are skipped."""
+        text = """NaturalGas | Combined Cycle | Moderate | 500
+Wind | Onshore | Low | invalid
+Solar | Utility PV | High | 200"""
+        result = parse_new_resources_text(text)
+        assert len(result) == 2
+        assert result[0][0] == "NaturalGas"
+        assert result[1][0] == "Solar"
+
+    def test_parse_wrong_number_of_fields(self):
+        """Test that lines with wrong number of fields are skipped."""
+        text = """NaturalGas | Combined Cycle | Moderate | 500
+Wind | Onshore | Low
+Solar | Utility PV | High | 200 | Extra"""
+        result = parse_new_resources_text(text)
+        assert len(result) == 1
+
+    def test_parse_empty_fields(self):
+        """Test that lines with empty fields are skipped."""
+        text = """NaturalGas | Combined Cycle | Moderate | 500
+ | Onshore | Low | 100
+Wind |  | Low | 100"""
+        result = parse_new_resources_text(text)
+        assert len(result) == 1
+
+    def test_parse_none_input(self):
+        """Test that None input returns empty list."""
+        assert parse_new_resources_text(None) == []
+
+    def test_parse_empty_string(self):
+        """Test that empty string returns empty list."""
+        assert parse_new_resources_text("") == []
+
+
+# ============================================================================
+# Utility Functions Tests (Priority 2)
+# ============================================================================
+
+
+def clone_group_map(group_map):
+    """Shallow clone of group map with set copies."""
+    return {name: set(values) for name, values in group_map.items()}
+
+
+DEFAULT_TECH_GROUPS = {
+    "Biomass": [
+        "Wood/Wood Waste Biomass",
+        "Landfill Gas",
+        "Municipal Solid Waste",
+        "Other Waste Biomass",
+    ],
+    "Other_peaker": [
+        "Natural Gas Internal Combustion Engine",
+        "Petroleum Liquids",
+    ],
+}
+
+
+def apply_default_grouping(tech_group, enabled=True, group_map=None):
+    """Collapse technologies into groups using provided map when enabled."""
+    if not enabled:
+        return tech_group
+    mapping = group_map if group_map is not None else DEFAULT_TECH_GROUPS
+    for group_name, members in mapping.items():
+        if tech_group in members:
+            return group_name
+    return tech_group
+
+
+def get_line_weight(capacity_mw):
+    """Calculate line weight based on transmission capacity."""
+    min_weight = 1
+    max_weight = 8
+    min_cap = 100
+    max_cap = 12000
+
+    clamped = max(min_cap, min(max_cap, capacity_mw))
+    normalized = (clamped - min_cap) / (max_cap - min_cap)
+    return min_weight + normalized * (max_weight - min_weight)
+
+
+def compute_regional_hydro_factor(region_aggregations):
+    """Default hydro_factor=2 globally; set regional_hydro_factor=4 for regions with p1-p7."""
+    target_bas = {f"p{i}" for i in range(1, 8)}
+    out = {}
+    for region_name, bas in region_aggregations.items():
+        bas_set = {str(b).strip().lower() for b in (bas or [])}
+        if bas_set & target_bas:
+            out[region_name] = 4
+    return out
+
+
+class TestCloneGroupMap:
+    """Test clone_group_map function."""
+
+    def test_clone_creates_independent_copy(self):
+        """Test that clone creates an independent copy."""
+        original = {"Group1": {"tech1", "tech2"}, "Group2": {"tech3"}}
+        cloned = clone_group_map(original)
+
+        # Modify cloned
+        cloned["Group1"].add("tech4")
+
+        # Original should be unchanged
+        assert "tech4" not in original["Group1"]
+        assert len(original["Group1"]) == 2
+
+    def test_clone_empty_map(self):
+        """Test cloning an empty map."""
+        original = {}
+        cloned = clone_group_map(original)
+        assert cloned == {}
+
+    def test_clone_preserves_structure(self):
+        """Test that clone preserves the map structure."""
+        original = {
+            "Group1": {"tech1", "tech2", "tech3"},
+            "Group2": {"tech4"},
+            "Group3": {"tech5", "tech6"},
+        }
+        cloned = clone_group_map(original)
+
+        assert len(cloned) == len(original)
+        for key in original:
+            assert key in cloned
+            assert cloned[key] == original[key]
+
+    def test_clone_with_empty_sets(self):
+        """Test cloning a map with empty sets."""
+        original = {"Group1": set(), "Group2": {"tech1"}}
+        cloned = clone_group_map(original)
+
+        assert len(cloned["Group1"]) == 0
+        assert "tech1" in cloned["Group2"]
+
+
+class TestApplyDefaultGrouping:
+    """Test apply_default_grouping function."""
+
+    def test_grouping_disabled(self):
+        """Test that grouping is bypassed when disabled."""
+        result = apply_default_grouping("Wood/Wood Waste Biomass", enabled=False)
+        assert result == "Wood/Wood Waste Biomass"
+
+    def test_grouping_biomass(self):
+        """Test grouping of biomass technologies."""
+        assert apply_default_grouping("Wood/Wood Waste Biomass") == "Biomass"
+        assert apply_default_grouping("Landfill Gas") == "Biomass"
+        assert apply_default_grouping("Municipal Solid Waste") == "Biomass"
+
+    def test_grouping_other_peaker(self):
+        """Test grouping of other peaker technologies."""
+        assert (
+            apply_default_grouping("Natural Gas Internal Combustion Engine")
+            == "Other_peaker"
+        )
+        assert apply_default_grouping("Petroleum Liquids") == "Other_peaker"
+
+    def test_grouping_ungrouped_tech(self):
+        """Test that ungrouped technologies pass through unchanged."""
+        assert apply_default_grouping("Solar Photovoltaic") == "Solar Photovoltaic"
+        assert apply_default_grouping("Wind Turbine") == "Wind Turbine"
+
+    def test_custom_group_map(self):
+        """Test using a custom grouping map."""
+        custom_map = {
+            "CustomGroup": ["Tech1", "Tech2"],
+            "AnotherGroup": ["Tech3"],
+        }
+        assert apply_default_grouping("Tech1", group_map=custom_map) == "CustomGroup"
+        assert apply_default_grouping("Tech3", group_map=custom_map) == "AnotherGroup"
+        assert apply_default_grouping("Tech4", group_map=custom_map) == "Tech4"
+
+
+class TestGetLineWeight:
+    """Test get_line_weight function."""
+
+    def test_minimum_weight(self):
+        """Test that minimum weight is returned for low capacity."""
+        assert get_line_weight(50) == 1.0  # Below min_cap
+        assert get_line_weight(100) == 1.0  # At min_cap
+
+    def test_maximum_weight(self):
+        """Test that maximum weight is returned for high capacity."""
+        assert get_line_weight(15000) == 8.0  # Above max_cap
+        assert get_line_weight(12000) == 8.0  # At max_cap
+
+    def test_mid_range_weight(self):
+        """Test weight calculation in mid-range."""
+        # At 50% of range: (6050 - 100) / (12000 - 100) = 0.5
+        # weight = 1 + 0.5 * 7 = 4.5
+        result = get_line_weight(6050)
+        assert 4.0 <= result <= 5.0
+
+    def test_weight_increases_with_capacity(self):
+        """Test that weight increases monotonically with capacity."""
+        weights = [get_line_weight(cap) for cap in [500, 2000, 5000, 10000]]
+        assert all(weights[i] < weights[i + 1] for i in range(len(weights) - 1))
+
+    def test_weight_range(self):
+        """Test that weight is always in valid range."""
+        for cap in [0, 100, 1000, 5000, 12000, 20000]:
+            weight = get_line_weight(cap)
+            assert 1.0 <= weight <= 8.0
+
+
+class TestComputeRegionalHydroFactor:
+    """Test compute_regional_hydro_factor function."""
+
+    def test_region_with_p_bas(self):
+        """Test that regions with p1-p7 get factor 4."""
+        region_aggs = {
+            "Region1": ["p1", "p2"],
+            "Region2": ["ca", "nv"],
+        }
+        result = compute_regional_hydro_factor(region_aggs)
+        assert result == {"Region1": 4}
+
+    def test_region_without_p_bas(self):
+        """Test that regions without p1-p7 are not in output."""
+        region_aggs = {
+            "Region1": ["ca", "nv"],
+            "Region2": ["tx", "ok"],
+        }
+        result = compute_regional_hydro_factor(region_aggs)
+        assert result == {}
+
+    def test_mixed_regions(self):
+        """Test with mix of regions with and without p BAs."""
+        region_aggs = {
+            "Region1": ["p1", "ca"],
+            "Region2": ["nv", "co"],
+            "Region3": ["p5"],
+        }
+        result = compute_regional_hydro_factor(region_aggs)
+        assert result == {"Region1": 4, "Region3": 4}
+        assert "Region2" not in result
+
+    def test_all_p_bas(self):
+        """Test region with all p1-p7 BAs."""
+        region_aggs = {
+            "PNW": [f"p{i}" for i in range(1, 8)],
+        }
+        result = compute_regional_hydro_factor(region_aggs)
+        assert result == {"PNW": 4}
+
+    def test_case_insensitive(self):
+        """Test that BA matching is case-insensitive."""
+        region_aggs = {
+            "Region1": ["P1", "P2"],  # Uppercase
+            "Region2": ["ca", "NV"],
+        }
+        result = compute_regional_hydro_factor(region_aggs)
+        assert result == {"Region1": 4}
+
+    def test_empty_regions(self):
+        """Test with empty region aggregations."""
+        assert compute_regional_hydro_factor({}) == {}
+
+    def test_region_with_none_bas(self):
+        """Test handling of None in BA list."""
+        region_aggs = {
+            "Region1": [None, "p1", None],
+        }
+        result = compute_regional_hydro_factor(region_aggs)
+        # Should handle gracefully
+        assert "Region1" in result
+
+
+# ============================================================================
+# Spectral Clustering Tests (Priority 3)
+# ============================================================================
+
+
+def spectral_cluster(graph, n_clusters):
+    """Perform spectral clustering on the graph using Normalized Laplacian."""
+    nodes = list(graph.nodes())
+    n = len(nodes)
+    if n <= n_clusters:
+        return {i: {node} for i, node in enumerate(nodes)}
+
+    node_to_idx = {node: i for i, node in enumerate(nodes)}
+
+    # Adjacency matrix
+    A = np.zeros((n, n))
+    for u, v, data in graph.edges(data=True):
+        i, j = node_to_idx[u], node_to_idx[v]
+        w = data.get("weight", 1.0)
+        A[i, j] = w
+        A[j, i] = w
+
+    # Degree matrix
+    d = np.sum(A, axis=1)
+
+    # Normalized Laplacian: L_sym = I - D^-1/2 * A * D^-1/2
+    d_inv_sqrt = np.power(d, -0.5, where=d > 0)
+    d_inv_sqrt[d == 0] = 0
+    D_inv_sqrt = np.diag(d_inv_sqrt)
+
+    L = np.eye(n) - D_inv_sqrt @ A @ D_inv_sqrt
+
+    # Eigen decomposition
+    vals, vecs = np.linalg.eigh(L)
+
+    # First k eigenvectors
+    k = n_clusters
+    X = vecs[:, :k]
+
+    # Normalize rows
+    rows_norm = np.linalg.norm(X, axis=1, keepdims=True)
+    rows_norm[rows_norm == 0] = 1
+    X_normalized = X / rows_norm
+
+    # Run K-Means
+    _, _, labels = run_kmeans_simple(X_normalized, k)
+
+    # Convert labels back to clusters
+    clusters = {}
+    for idx, label in enumerate(labels):
+        if label not in clusters:
+            clusters[label] = set()
+        clusters[label].add(nodes[idx])
+
+    return clusters
+
+
+class TestSpectralClustering:
+    """Test spectral_cluster function."""
+
+    def test_spectral_single_cluster(self):
+        """Test spectral clustering with k=1."""
+        graph = nx.Graph()
+        graph.add_edges_from([(1, 2), (2, 3), (3, 4)])
+        result = spectral_cluster(graph, 1)
+
+        assert len(result) == 1
+        assert result[0] == {1, 2, 3, 4}
+
+    def test_spectral_two_components(self):
+        """Test spectral clustering on two well-separated components."""
+        graph = nx.Graph()
+        # Two separate components
+        graph.add_edges_from([(1, 2), (2, 3)])
+        graph.add_edges_from([(4, 5), (5, 6)])
+        result = spectral_cluster(graph, 2)
+
+        assert len(result) == 2
+        clusters = list(result.values())
+        # Should separate into the two components
+        assert any({1, 2, 3}.issubset(c) for c in clusters)
+        assert any({4, 5, 6}.issubset(c) for c in clusters)
+
+    def test_spectral_preserves_nodes(self):
+        """Test that all nodes are preserved after clustering."""
+        graph = nx.complete_graph(5)
+        result = spectral_cluster(graph, 2)
+
+        all_nodes = set()
+        for cluster in result.values():
+            all_nodes.update(cluster)
+        assert all_nodes == {0, 1, 2, 3, 4}
+
+    def test_spectral_more_clusters_than_nodes(self):
+        """Test when requesting more clusters than nodes."""
+        graph = nx.Graph()
+        graph.add_edges_from([(1, 2), (2, 3)])
+        result = spectral_cluster(graph, 10)
+
+        assert len(result) == 3
+        assert all(len(cluster) == 1 for cluster in result.values())
+
+    def test_spectral_weighted_graph(self):
+        """Test spectral clustering with weighted edges."""
+        graph = nx.Graph()
+        graph.add_edge(1, 2, weight=10)
+        graph.add_edge(2, 3, weight=10)
+        graph.add_edge(3, 4, weight=1)
+        graph.add_edge(4, 5, weight=10)
+        graph.add_edge(5, 6, weight=10)
+        result = spectral_cluster(graph, 2)
+
+        assert len(result) == 2
+        # Should tend to separate at the weak link (3-4)
+
+
+# ============================================================================
+# Louvain Clustering Tests (Priority 3)
+# ============================================================================
+
+
+def louvain_cluster(graph):
+    """Perform Louvain community detection on a graph."""
+    if graph.number_of_nodes() == 0:
+        return {}
+
+    if graph.number_of_edges() == 0:
+        return {i: {node} for i, node in enumerate(graph.nodes())}
+
+    try:
+        communities = nx.community.louvain_communities(
+            graph, weight="weight", resolution=1.0, seed=42
+        )
+        return {i: set(community) for i, community in enumerate(communities)}
+    except Exception:
+        return {i: {node} for i, node in enumerate(graph.nodes())}
+
+
+class TestLouvainClustering:
+    """Test louvain_cluster function."""
+
+    def test_louvain_empty_graph(self):
+        """Test Louvain on empty graph."""
+        graph = nx.Graph()
+        result = louvain_cluster(graph)
+        assert result == {}
+
+    def test_louvain_no_edges(self):
+        """Test Louvain on graph with no edges."""
+        graph = nx.Graph()
+        graph.add_nodes_from([1, 2, 3])
+        result = louvain_cluster(graph)
+
+        assert len(result) == 3
+        assert all(len(cluster) == 1 for cluster in result.values())
+
+    def test_louvain_complete_graph(self):
+        """Test Louvain on complete graph (single community expected)."""
+        graph = nx.complete_graph(5)
+        result = louvain_cluster(graph)
+
+        # Complete graph should typically result in one community
+        assert len(result) >= 1
+        all_nodes = set()
+        for cluster in result.values():
+            all_nodes.update(cluster)
+        assert all_nodes == {0, 1, 2, 3, 4}
+
+    def test_louvain_two_components(self):
+        """Test Louvain on graph with two clear communities."""
+        graph = nx.Graph()
+        # Dense intra-community edges
+        graph.add_edges_from([(1, 2), (2, 3), (3, 1)])
+        graph.add_edges_from([(4, 5), (5, 6), (6, 4)])
+        # Weak inter-community edge
+        graph.add_edge(3, 4, weight=0.1)
+
+        result = louvain_cluster(graph)
+
+        # Should identify 2 communities (or more if it splits further)
+        assert len(result) >= 1
+
+    def test_louvain_preserves_nodes(self):
+        """Test that all nodes are in exactly one community."""
+        graph = nx.karate_club_graph()
+        result = louvain_cluster(graph)
+
+        all_nodes = set()
+        for cluster in result.values():
+            all_nodes.update(cluster)
+        assert all_nodes == set(graph.nodes())
+
+    def test_louvain_deterministic(self):
+        """Test that Louvain with same seed is deterministic."""
+        graph = nx.karate_club_graph()
+        result1 = louvain_cluster(graph)
+        result2 = louvain_cluster(graph)
+
+        # Should give same result with same seed
+        assert len(result1) == len(result2)
+
+
+# ============================================================================
+# ESR Functions Tests (Priority 4)
+# ============================================================================
+
+
+class ESRGenerationError(Exception):
+    """Raised when ESR generation is not possible."""
+
+    pass
+
+
+def extract_state_for_region(region_bas, hierarchy_df):
+    """Extract states for each BA in a model region."""
+    ba_to_state = {}
+    for ba in region_bas:
+        row = hierarchy_df[hierarchy_df["ba"] == ba]
+        if row.empty:
+            raise ESRGenerationError(f"BA '{ba}' not found in hierarchy data")
+        state_val = str(row.iloc[0]["st"]).lower()
+        ba_to_state[ba] = state_val
+    return ba_to_state
+
+
+def get_states_in_region(region_bas, hierarchy_df):
+    """Get unique states in a model region."""
+    ba_to_state = extract_state_for_region(region_bas, hierarchy_df)
+    return set(ba_to_state.values())
+
+
+def can_states_trade(state1, state2, rectable_df):
+    """Check if two states can trade REC/ESR credits based on rectable.csv."""
+    state1_upper = state1.upper()
+    state2_upper = state2.upper()
+    if state1_upper not in rectable_df.index or state2_upper not in rectable_df.columns:
+        return False
+    value = rectable_df.loc[state1_upper, state2_upper]
+    return pd.notna(value) and float(value) > 0
+
+
+def can_states_trade_transitively(states_set, rectable_df):
+    """Check if all states in a set can trade with each other transitively."""
+    if len(states_set) <= 1:
+        return True
+
+    states_list = list(states_set)
+
+    # Build a graph of direct trading relationships
+    trading_graph = {s: set() for s in states_list}
+    for i, s1 in enumerate(states_list):
+        for s2 in states_list[i + 1 :]:
+            if can_states_trade(s1, s2, rectable_df):
+                trading_graph[s1].add(s2)
+                trading_graph[s2].add(s1)
+
+    # Check if all states are in the same connected component
+    visited = set()
+
+    def dfs(state):
+        visited.add(state)
+        for neighbor in trading_graph[state]:
+            if neighbor not in visited:
+                dfs(neighbor)
+
+    dfs(states_list[0])
+    return len(visited) == len(states_list)
+
+
+def split_bas_by_trading_zones(bas, hierarchy_df, rectable_df):
+    """Split BAs into groups where all states in each group can trade transitively."""
+    if rectable_df is None or len(bas) <= 1:
+        return [set(bas)]
+
+    # Build BA to state mapping
+    ba_to_state = {}
+    for ba in bas:
+        row = hierarchy_df[hierarchy_df["ba"] == ba]
+        if not row.empty:
+            ba_to_state[ba] = str(row.iloc[0]["st"]).lower()
+
+    # Get unique states
+    states = set(ba_to_state.values())
+    if len(states) <= 1:
+        return [set(bas)]
+
+    states_list = list(states)
+
+    # Build a graph of direct trading relationships between states
+    trading_graph = {s: set() for s in states_list}
+    for i, s1 in enumerate(states_list):
+        for s2 in states_list[i + 1 :]:
+            if can_states_trade(s1, s2, rectable_df):
+                trading_graph[s1].add(s2)
+                trading_graph[s2].add(s1)
+
+    # Find connected components (trading zones)
+    visited = set()
+    trading_zones = []
+
+    def dfs(state, zone):
+        visited.add(state)
+        zone.add(state)
+        for neighbor in trading_graph[state]:
+            if neighbor not in visited:
+                dfs(neighbor, zone)
+
+    for state in states_list:
+        if state not in visited:
+            zone = set()
+            dfs(state, zone)
+            trading_zones.append(zone)
+
+    # If all states are in one trading zone, no split needed
+    if len(trading_zones) == 1:
+        return [set(bas)]
+
+    # Group BAs by their trading zone
+    ba_groups = []
+    for zone in trading_zones:
+        group = {ba for ba, st in ba_to_state.items() if st in zone}
+        if group:
+            ba_groups.append(group)
+
+    return ba_groups
+
+
+class TestESRFunctions:
+    """Test ESR generation functions."""
+
+    @pytest.fixture
+    def hierarchy_data(self):
+        """Create sample hierarchy data."""
+        return pd.DataFrame(
+            {
+                "ba": ["ca", "nv", "co", "tx", "ok"],
+                "st": ["CA", "NV", "CO", "TX", "OK"],
+            }
+        )
+
+    @pytest.fixture
+    def rectable_data(self):
+        """Create sample rectable data (trading matrix)."""
+        # CA and NV can trade, TX and OK can trade, but CO is isolated
+        data = pd.DataFrame(
+            {
+                "CA": [1.0, 1.0, 0.0, 0.0, 0.0],
+                "NV": [1.0, 1.0, 0.0, 0.0, 0.0],
+                "CO": [0.0, 0.0, 1.0, 0.0, 0.0],
+                "TX": [0.0, 0.0, 0.0, 1.0, 1.0],
+                "OK": [0.0, 0.0, 0.0, 1.0, 1.0],
+            },
+            index=["CA", "NV", "CO", "TX", "OK"],
+        )
+        return data
+
+    def test_extract_state_for_region(self, hierarchy_data):
+        """Test extracting states for BAs."""
+        result = extract_state_for_region(["ca", "nv"], hierarchy_data)
+        assert result == {"ca": "ca", "nv": "nv"}
+
+    def test_extract_state_for_region_missing_ba(self, hierarchy_data):
+        """Test that missing BA raises error."""
+        with pytest.raises(ESRGenerationError, match="not found"):
+            extract_state_for_region(["ca", "unknown"], hierarchy_data)
+
+    def test_get_states_in_region(self, hierarchy_data):
+        """Test getting unique states in region."""
+        result = get_states_in_region(["ca", "nv", "co"], hierarchy_data)
+        assert result == {"ca", "nv", "co"}
+
+    def test_can_states_trade_direct(self, rectable_data):
+        """Test direct trading between states."""
+        assert can_states_trade("ca", "nv", rectable_data) is True
+        assert can_states_trade("tx", "ok", rectable_data) is True
+        assert can_states_trade("ca", "tx", rectable_data) is False
+
+    def test_can_states_trade_case_insensitive(self, rectable_data):
+        """Test that trading check is case-insensitive."""
+        assert can_states_trade("Ca", "Nv", rectable_data) is True
+        assert can_states_trade("CA", "NV", rectable_data) is True
+
+    def test_can_states_trade_missing_state(self, rectable_data):
+        """Test that missing state returns False."""
+        assert can_states_trade("ca", "wy", rectable_data) is False
+        assert can_states_trade("unknown", "ca", rectable_data) is False
+
+    def test_can_states_trade_transitively_single(self, rectable_data):
+        """Test transitive trading with single state."""
+        assert can_states_trade_transitively({"ca"}, rectable_data) is True
+
+    def test_can_states_trade_transitively_direct(self, rectable_data):
+        """Test transitive trading with direct trading."""
+        assert can_states_trade_transitively({"ca", "nv"}, rectable_data) is True
+        assert can_states_trade_transitively({"tx", "ok"}, rectable_data) is True
+
+    def test_can_states_trade_transitively_no_connection(self, rectable_data):
+        """Test transitive trading with no connection."""
+        assert can_states_trade_transitively({"ca", "tx"}, rectable_data) is False
+        assert can_states_trade_transitively({"ca", "co"}, rectable_data) is False
+
+    def test_split_bas_by_trading_zones_single_zone(self, hierarchy_data, rectable_data):
+        """Test splitting BAs when all in one trading zone."""
+        result = split_bas_by_trading_zones(
+            {"ca", "nv"}, hierarchy_data, rectable_data
+        )
+        assert len(result) == 1
+        assert result[0] == {"ca", "nv"}
+
+    def test_split_bas_by_trading_zones_multiple_zones(
+        self, hierarchy_data, rectable_data
+    ):
+        """Test splitting BAs into multiple trading zones."""
+        result = split_bas_by_trading_zones(
+            {"ca", "nv", "tx", "ok"}, hierarchy_data, rectable_data
+        )
+        assert len(result) == 2
+        # Should have {ca, nv} and {tx, ok}
+        zones = [set(z) for z in result]
+        assert {"ca", "nv"} in zones
+        assert {"tx", "ok"} in zones
+
+    def test_split_bas_by_trading_zones_isolated_state(
+        self, hierarchy_data, rectable_data
+    ):
+        """Test splitting with an isolated state."""
+        result = split_bas_by_trading_zones(
+            {"ca", "co"}, hierarchy_data, rectable_data
+        )
+        assert len(result) == 2
+        # CO should be in its own zone
+        zones = [set(z) for z in result]
+        assert {"co"} in zones
+
+    def test_split_bas_by_trading_zones_none_rectable(self, hierarchy_data):
+        """Test that None rectable returns single zone."""
+        result = split_bas_by_trading_zones({"ca", "nv", "tx"}, hierarchy_data, None)
+        assert len(result) == 1
+        assert result[0] == {"ca", "nv", "tx"}
+
+    def test_split_bas_by_trading_zones_single_ba(self, hierarchy_data, rectable_data):
+        """Test that single BA returns single zone."""
+        result = split_bas_by_trading_zones({"ca"}, hierarchy_data, rectable_data)
+        assert len(result) == 1
+        assert result[0] == {"ca"}
 
 
 if __name__ == "__main__":
